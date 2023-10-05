@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <DisableFody>true</DisableFody>
+    <_RefProject>ILAccess.Tests.AssemblyToProcess</_RefProject>
+    <_RefProjectDir>..\$(_RefProject)\</_RefProjectDir>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(_RefProjectDir)**\*.cs" Exclude="$(_RefProjectDir)obj\**;$(_RefProjectDir)AssemblyToProcessReference.cs" Link="$(_RefProject)\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="2.5.1" />
+    <ProjectReference Include="..\..\src\ILAccess\ILAccess.csproj" />
+  </ItemGroup>
+
+</Project>

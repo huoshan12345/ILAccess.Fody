@@ -1,0 +1,21 @@
+<Project>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors>huoshan12345</Authors>
+    <Description>A workaround for interface's default method invocation before official support of C# team</Description>
+    <Copyright>Copyright © huoshan12345 2018-$([System.DateTime]::Now.ToString('yyyy'))</Copyright>
+    <PackageTags>IL;MSIL;Fody;ILWeaving;Cecil</PackageTags>
+    <PackageProjectUrl>https://github.com/huoshan12345/ILAccess.Fody</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIconUrl>https://github.com/huoshan12345/ILAccess.Fody/raw/master/icon.png</PackageIconUrl>
+  </PropertyGroup>
+
+</Project>
