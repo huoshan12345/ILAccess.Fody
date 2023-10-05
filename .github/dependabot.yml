@@ -1,0 +1,24 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+
+registries:
+  nuget-jfrog:
+    type: nuget-feed
+    url: https://seismic.jfrog.io/artifactory/api/nuget/nuget
+    username: ${{ secrets.ORG_JFROG_USERNAME }}
+    password: ${{ secrets.ORG_JFROG_ACCESS_TOKEN }}
+
+updates:
+  - package-ecosystem: "nuget" # See documentation for possible values
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "daily"
+    # Disable rebasing for npm pull requests
+    rebase-strategy: "disabled"
+    open-pull-requests-limit: 50
+    registries:
+      - nuget-jfrog
