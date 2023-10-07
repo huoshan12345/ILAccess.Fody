@@ -7,42 +7,41 @@ using System.Text;
 using ILAccess.Fody.Support;
 using Mono.Cecil.Cil;
 
-namespace ILAccess.Fody
+namespace ILAccess.Fody;
+
+public class ModuleWeaver : BaseModuleWeaver
 {
-    public class ModuleWeaver : BaseModuleWeaver
+    private readonly Logger _log;
+
+    public ModuleWeaver()
     {
-        private readonly Logger _log;
+        _log = new Logger(this);
+    }
 
-        public ModuleWeaver()
+    public override void Execute()
+    {
+        foreach (var type in ModuleDefinition.GetTypes())
         {
-            _log = new Logger(this);
-        }
-
-        public override void Execute()
-        {
-            foreach (var type in ModuleDefinition.GetTypes())
+            foreach (var method in type.Methods)
             {
-                foreach (var method in type.Methods)
+                try
                 {
-                    try
-                    {
-                        if (!MethodWeaver.NeedsProcessing(ModuleDefinition, method))
-                            continue;
+                    if (!MethodWeaver.NeedsProcessing(ModuleDefinition, method))
+                        continue;
 
-                        _log.Debug($"Processing: {method.FullName}");
-                        new MethodWeaver(ModuleDefinition, method, _log).Process();
-                    }
-                    catch (WeavingException ex)
-                    {
-                        AddError(ex.Message, ex.SequencePoint);
-                    }
+                    _log.Debug($"Processing: {method.FullName}");
+                    new MethodWeaver(ModuleDefinition, method, _log).Process();
+                }
+                catch (WeavingException ex)
+                {
+                    AddError(ex.Message, ex.SequencePoint);
                 }
             }
         }
-
-        public override IEnumerable<string> GetAssembliesForScanning() => Enumerable.Empty<string>();
-
-        protected virtual void AddError(string message, SequencePoint? sequencePoint)
-            => _log.Error(message, sequencePoint);
     }
+
+    public override IEnumerable<string> GetAssembliesForScanning() => Enumerable.Empty<string>();
+
+    protected virtual void AddError(string message, SequencePoint? sequencePoint)
+        => _log.Error(message, sequencePoint);
 }
