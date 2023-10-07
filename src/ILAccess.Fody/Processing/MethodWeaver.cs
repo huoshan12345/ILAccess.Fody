@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.ExceptionServices;
 using Fody;
 using ILAccess.Fody.Extensions;
 using ILAccess.Fody.Models;
 using ILAccess.Fody.Support;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
 using Mono.Collections.Generic;
 
 namespace ILAccess.Fody.Processing;
@@ -166,11 +163,6 @@ internal sealed class MethodWeaver
         {
             if (!IsInterfaceMethodCandidate(p, interfaceTypeRef, interfaceTypeDef))
                 continue;
-
-            if (_method.FullName.Contains("OverridedGenericMethodTestCases::GenericMethod_Invoke"))
-            {
-
-            }
 
             var graph = Instructions.BuildGraph();
             var args = p.GetArgumentPushInstructions(Instructions, graph);

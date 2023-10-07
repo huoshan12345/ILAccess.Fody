@@ -1,8 +1,7 @@
-﻿namespace ILAccess.Tests.SourceGenerator
+﻿namespace ILAccess.Tests.SourceGenerator;
+
+public enum OutputType
 {
-    public enum OutputType
-    {
-        Context = 0,
-        File
-    }
+    Context = 0,
+    File
 }
