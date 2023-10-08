@@ -21,4 +21,20 @@
     <ProjectReference Include="..\ILAccess.Tests.StandardAssemblyToProcess\ILAccess.Tests.StandardAssemblyToProcess.csproj" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <GeneratedPath>obj\Generated</GeneratedPath>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(GeneratedPath)</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <Target Name="CleanSourceGeneratedFiles" BeforeTargets="BeforeBuild" DependsOnTargets="$(BeforeBuildDependsOn)">
+    <RemoveDir Directories="$(GeneratedPath)" ContinueOnError="WarnAndContinue" />
+  </Target>
+
+  <ItemGroup>
+    <Content Include="obj\Generated\**\*.g.cs">
+      <Link>Generated\%(FileName)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
 </Project>

@@ -39,13 +39,4 @@ public readonly record struct ILAccessor<T>(T? Value)
     /// <typeparam name="TValue"></typeparam>
     /// <returns></returns>
     [ILAccess] public extern ILAccessor<T> SetFieldValue<TValue>(string name, TValue? value);
-
-    /// <summary>
-    /// Invokes a method.
-    /// </summary>
-    /// <param name="name"></param>
-    /// <param name="args"></param>
-    /// <typeparam name="TReturn"></typeparam>
-    /// <returns></returns>
-    [ILAccess] public extern TReturn InvokeMethod<TReturn>(string name, params object?[]? args);
 }

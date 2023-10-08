@@ -14,7 +14,7 @@ namespace ILAccess.Fody.Processing;
 
 internal sealed class MethodWeaver
 {
-    private const string AnchorMethodDeclaringTypeName = "ILAccess.ObjectExtension";
+    private const string AnchorMethodDeclaringTypeName = "ILAccess.ILAccessor";
     private const string AnchorMethodName = "Base";
 
     private readonly ModuleDefinition _module;
@@ -114,7 +114,7 @@ internal sealed class MethodWeaver
         {
             nextInstruction = instruction.Next;
 
-            if (!IsAnchorMethodCall(instruction))
+            if (IsAnchorMethodCall(instruction) == false)
                 continue;
 
             try
