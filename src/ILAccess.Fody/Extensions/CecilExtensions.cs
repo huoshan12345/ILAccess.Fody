@@ -390,11 +390,11 @@ internal static partial class CecilExtensions
 
             void AddBranchOperand()
             {
-                var ins = (Instruction)instruction!.Operand;
-                var i = dic![ins];
+                var ins = (Instruction)instruction.Operand;
+                var i = dic[ins];
                 var child = GraphNode.Create(i);
-                node!.Children.Add(child);
-                queue!.Enqueue(child);
+                node.Children.Add(child);
+                queue.Enqueue(child);
             }
 
             void AddNext()
@@ -404,8 +404,8 @@ internal static partial class CecilExtensions
                     return;
 
                 var child = GraphNode.Create(nextIndex);
-                node!.Children.Add(child);
-                queue!.Enqueue(child);
+                node.Children.Add(child);
+                queue.Enqueue(child);
             }
 
         }
