@@ -1,4 +1,6 @@
-﻿namespace ILAccess;
+﻿using System;
+
+namespace ILAccess;
 
 /// <summary>
 /// 
@@ -6,13 +8,15 @@
 /// <typeparam name="T"></typeparam>
 public readonly record struct ILAccessor<T>(T? Value)
 {
+    private const string Error = "This method is meant to be replaced at compile time by ILAccess.Fody, but the weaver has not been executed correctly.";
+
     /// <summary>
     /// Gets a value of a property.
     /// </summary>
     /// <param name="name"></param>
     /// <typeparam name="TValue"></typeparam>
     /// <returns></returns>
-    [ILAccess] public extern TValue? GetPropertyValue<TValue>(string name);
+    public TValue? GetPropertyValue<TValue>(string name) => throw new InvalidOperationException(Error);
 
     /// <summary>
     /// Sets a value of a property.
@@ -21,7 +25,7 @@ public readonly record struct ILAccessor<T>(T? Value)
     /// <param name="value"></param>
     /// <typeparam name="TValue"></typeparam>
     /// <returns></returns>
-    [ILAccess] public extern ILAccessor<T> SetPropertyValue<TValue>(string name, TValue? value);
+    public ILAccessor<T> SetPropertyValue<TValue>(string name, TValue? value) => throw new InvalidOperationException(Error);
 
     /// <summary>
     /// Gets a value of a field.
@@ -29,7 +33,7 @@ public readonly record struct ILAccessor<T>(T? Value)
     /// <param name="name"></param>
     /// <typeparam name="TValue"></typeparam>
     /// <returns></returns>
-    [ILAccess] public extern TValue? GetFieldValue<TValue>(string name);
+    public TValue? GetFieldValue<TValue>(string name) => throw new InvalidOperationException(Error);
 
     /// <summary>
     /// Sets a value of a field.
@@ -38,5 +42,5 @@ public readonly record struct ILAccessor<T>(T? Value)
     /// <param name="value"></param>
     /// <typeparam name="TValue"></typeparam>
     /// <returns></returns>
-    [ILAccess] public extern ILAccessor<T> SetFieldValue<TValue>(string name, TValue? value);
+    public ILAccessor<T> SetFieldValue<TValue>(string name, TValue? value) => throw new InvalidOperationException(Error);
 }

@@ -23,13 +23,8 @@ internal sealed class MethodWeaver
         _references = new References(module);
     }
 
-    public static bool NeedsProcessing(ModuleDefinition module, MethodDefinition method)
-        => HasLibReference(module, method, out _);
-
-    private static bool HasLibReference(ModuleDefinition module, MethodDefinition method, out Instruction? refInstruction)
+    public static bool HasLibReference(ModuleDefinition module, MethodDefinition method)
     {
-        refInstruction = null;
-
         if (method.IsWeaverAssemblyReferenced(module))
             return true;
 
@@ -41,8 +36,6 @@ internal sealed class MethodWeaver
 
         foreach (var instruction in method.Body.Instructions)
         {
-            refInstruction = instruction;
-
             switch (instruction.Operand)
             {
                 case MethodReference methodRef when methodRef.IsWeaverAssemblyReferenced(module):
@@ -53,7 +46,6 @@ internal sealed class MethodWeaver
             }
         }
 
-        refInstruction = null;
         return false;
     }
 
@@ -89,7 +81,9 @@ internal sealed class MethodWeaver
             || instruction.Operand is not MethodReference method)
             return false;
 
-        return method.DeclaringType.FullName == WeaverAnchors.TypeFullName;
+        var type = method.DeclaringType;
+        return type.Scope.Name == WeaverAnchors.AssemblyName 
+               && type.SimpleName() == WeaverAnchors.TypeName;
     }
 
     private void ProcessImpl()

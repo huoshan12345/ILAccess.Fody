@@ -3,7 +3,7 @@
 public class AssemblyTests
 {
     [Fact]
-    public void should_not_reference_value_tuple()
+    public void ShouldNotReferenceValueTuple()
     {
         // System.ValueTuple may cause issues in some configurations, avoid using it.
 
@@ -25,7 +25,7 @@ public class AssemblyTests
     }
 
     [Fact]
-    public void should_not_add_reference_to_private_core_lib()
+    public void ShouldNotAddReferenceToPrivateCoreLib()
     {
         AssemblyToProcessFixture.ResultModule.AssemblyReferences.ShouldNotContain(i => i.Name == "System.Private.CoreLib");
         StandardAssemblyToProcessFixture.ResultModule.AssemblyReferences.ShouldNotContain(i => i.Name == "System.Private.CoreLib");

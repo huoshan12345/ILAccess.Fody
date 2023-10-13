@@ -19,7 +19,7 @@ public class ModuleWeaver : BaseModuleWeaver
             {
                 try
                 {
-                    if (!MethodWeaver.NeedsProcessing(ModuleDefinition, method))
+                    if (MethodWeaver.HasLibReference(ModuleDefinition, method) == false)
                         continue;
 
                     _log.Debug($"Processing: {method.FullName}");
