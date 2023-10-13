@@ -1,6 +1,4 @@
-﻿using Mono.Cecil.Cil;
-
-namespace ILAccess.Fody.Support;
+﻿namespace ILAccess.Fody.Support;
 
 internal interface ILogger
 {

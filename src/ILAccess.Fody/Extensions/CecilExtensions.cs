@@ -1,19 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using Fody;
-using ILAccess.Fody.Models;
-using ILAccess.Fody.Support;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Mono.Collections.Generic;
-
-namespace ILAccess.Fody.Extensions;
+﻿namespace ILAccess.Fody.Extensions;
 
 internal static partial class CecilExtensions
 {

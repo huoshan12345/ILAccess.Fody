@@ -1,10 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using Fody;
-using ILAccess.Fody.Extensions;
-using ILAccess.Fody.Models;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
+﻿using ILAccess.Fody.Extensions;
 
 namespace ILAccess.Fody.Processing;
 

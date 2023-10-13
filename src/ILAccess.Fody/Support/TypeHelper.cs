@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using Mono.Cecil;
+﻿using System.Linq.Expressions;
 using ILAccess.Fody.Extensions;
 
 namespace ILAccess.Fody.Support;

@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using ILAccess.Tests.SourceGenerator.Sources;
-using Microsoft.CodeAnalysis;
 
 namespace ILAccess.Tests.SourceGenerator;
 

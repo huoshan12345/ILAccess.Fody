@@ -1,11 +1,4 @@
-﻿using Fody;
-using ILAccess.Fody.Processing;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ILAccess.Fody.Support;
-using Mono.Cecil.Cil;
+﻿using System.Text;
 
 namespace ILAccess.Fody;
 

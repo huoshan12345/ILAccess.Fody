@@ -1,10 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using Fody;
+﻿using System.Runtime.InteropServices;
 using ILAccess.Fody.Extensions;
-using Mono.Cecil;
 using Mono.Cecil.Rocks;
 
 namespace ILAccess.Fody.Models;

@@ -1,22 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using Fody;
-using ILAccess.Fody.Extensions;
-using ILAccess.Fody.Models;
-using ILAccess.Fody.Support;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
+﻿using ILAccess.Fody.Extensions;
 using Mono.Collections.Generic;
 
 namespace ILAccess.Fody.Processing;
 
 internal sealed class MethodWeaver
 {
-    private const string AnchorMethodDeclaringTypeName = "ILAccess.ILAccessor";
-    private const string AnchorMethodName = "Base";
-
     private readonly ModuleDefinition _module;
     private readonly MethodDefinition _method;
     private readonly MethodWeaverLogger _log;
@@ -98,11 +86,10 @@ internal sealed class MethodWeaver
     private static bool IsAnchorMethodCall(Instruction instruction)
     {
         if (instruction.OpCode != OpCodes.Call
-            || instruction.Operand is not GenericInstanceMethod method)
+            || instruction.Operand is not MethodReference method)
             return false;
 
-        return method.DeclaringType.FullName == AnchorMethodDeclaringTypeName
-               && method.Name == AnchorMethodName;
+        return method.DeclaringType.FullName == WeaverAnchors.TypeFullName;
     }
 
     private void ProcessImpl()

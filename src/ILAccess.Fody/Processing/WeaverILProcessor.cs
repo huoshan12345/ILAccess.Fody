@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using Fody;
+﻿using System.Globalization;
 using ILAccess.Fody.Extensions;
-using ILAccess.Fody.Models;
-using ILAccess.Fody.Support;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
 
 namespace ILAccess.Fody.Processing;
 

@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 using ILAccess.Fody.Extensions;
-using ILAccess.Fody.Models;
-using Mono.Cecil;
 
 namespace ILAccess.Fody.Processing;
 

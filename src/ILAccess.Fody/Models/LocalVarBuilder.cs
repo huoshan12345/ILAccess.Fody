@@ -1,7 +1,4 @@
-﻿using Fody;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
+﻿using Mono.Cecil.Rocks;
 
 namespace ILAccess.Fody.Models;
 

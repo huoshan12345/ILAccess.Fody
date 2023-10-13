@@ -1,7 +1,3 @@
-using ILAccess.Fody.Support;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-
 namespace ILAccess.Fody.Processing;
 
 internal class MethodWeaverLogger : ILogger

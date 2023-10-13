@@ -1,7 +1,4 @@
-﻿using Fody;
-using Mono.Cecil.Cil;
-
-namespace ILAccess.Fody.Support;
+﻿namespace ILAccess.Fody.Support;
 
 internal sealed class InstructionWeavingException : WeavingException
 {

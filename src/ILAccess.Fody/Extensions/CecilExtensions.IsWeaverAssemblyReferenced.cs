@@ -1,17 +1,7 @@
-﻿using Mono.Cecil;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-
-namespace ILAccess.Fody.Extensions;
+﻿namespace ILAccess.Fody.Extensions;
 
 internal static partial class CecilExtensions
 {
-    private const string AssemblyName = "ILAccess";
-
     private static readonly ConcurrentDictionary<TypeReference, bool> _usageCache = new();
 
     public static bool IsWeaverAssemblyReferenced(this TypeReference? type, ModuleDefinition module)
@@ -32,7 +22,7 @@ internal static partial class CecilExtensions
                                       || t.HasCustomAttributes && t.CustomAttributes.Any(i => i.IsWeaverAssemblyReferenced(module)),
                 IModifierType t => t.ElementType.IsWeaverAssemblyReferenced(module) || t.ModifierType.IsWeaverAssemblyReferenced(module),
                 FunctionPointerType t => ((IMethodSignature)t).IsWeaverAssemblyReferenced(module),
-                _ => typeRef.Scope?.MetadataScopeType == MetadataScopeType.AssemblyNameReference && typeRef.Scope.Name == AssemblyName
+                _ => typeRef.Scope is { MetadataScopeType: MetadataScopeType.AssemblyNameReference, Name: WeaverAnchors.AssemblyName }
             };
         }
     }

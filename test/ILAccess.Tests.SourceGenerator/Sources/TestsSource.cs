@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.CodeAnalysis;
-
-namespace ILAccess.Tests.SourceGenerator.Sources;
+﻿namespace ILAccess.Tests.SourceGenerator.Sources;
 
 public static class TestsSource
 {
@@ -37,6 +31,7 @@ public static class TestsSource
             var attrs = method.GetAttributes();
             if (attrs.Any(IsXunitFact))
             {
+                builder.WriteLine();
                 builder.WriteLine("[Fact]")
                     .WriteLine($"public void {method.Name}()")
                     .WriteOpeningBracket()
@@ -47,6 +42,7 @@ public static class TestsSource
 
         // End class declaration
         builder.WriteClosingBracket();
+        builder.WriteLine();
 
         // Standard Class declaration
         var classNameOfStandard = className + "Standard";
