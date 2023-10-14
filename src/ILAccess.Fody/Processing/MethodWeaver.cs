@@ -1,4 +1,5 @@
 ﻿using static ILAccess.Fody.Processing.WeaverAnchors.MethodNames;
+using CallSite = Mono.Cecil.CallSite;
 
 namespace ILAccess.Fody.Processing;
 

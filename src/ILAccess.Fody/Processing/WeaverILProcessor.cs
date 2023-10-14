@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-
-namespace ILAccess.Fody.Processing;
+﻿namespace ILAccess.Fody.Processing;
 
 internal sealed class WeaverILProcessor
 {
@@ -99,94 +97,6 @@ internal sealed class WeaverILProcessor
 
         _referencedInstructions.Remove(oldInstruction);
         _referencedInstructions.Add(newInstruction);
-    }
-
-    public Instruction Create(OpCode opCode, TypeReference typeRef)
-    {
-        try
-        {
-            return _il.Create(opCode, typeRef);
-        }
-        catch (ArgumentException)
-        {
-            throw ExceptionInvalidOperand(opCode);
-        }
-    }
-
-    public Instruction Create(OpCode opCode, MethodReference methodRef)
-    {
-        try
-        {
-            return _il.Create(opCode, methodRef);
-        }
-        catch (ArgumentException)
-        {
-            throw ExceptionInvalidOperand(opCode);
-        }
-    }
-
-    public Instruction Create(OpCode opCode, FieldReference fieldRef)
-    {
-        try
-        {
-            return _il.Create(opCode, fieldRef);
-        }
-        catch (ArgumentException)
-        {
-            throw ExceptionInvalidOperand(opCode);
-        }
-    }
-
-    public Instruction Create(OpCode opCode, Instruction instruction)
-    {
-        try
-        {
-            var result = _il.Create(opCode, instruction);
-            _referencedInstructions.Add(instruction);
-            return result;
-        }
-        catch (ArgumentException)
-        {
-            throw ExceptionInvalidOperand(opCode);
-        }
-    }
-
-    public Instruction Create(OpCode opCode, Instruction[] instructions)
-    {
-        try
-        {
-            var result = _il.Create(opCode, instructions);
-            _referencedInstructions.UnionWith(instructions.Where(i => i != null));
-            return result;
-        }
-        catch (ArgumentException)
-        {
-            throw ExceptionInvalidOperand(opCode);
-        }
-    }
-
-    public Instruction Create(OpCode opCode, VariableDefinition variableDef)
-    {
-        try
-        {
-            return _il.Create(opCode, variableDef);
-        }
-        catch (ArgumentException)
-        {
-            throw ExceptionInvalidOperand(opCode);
-        }
-    }
-
-    public Instruction Create(OpCode opCode, CallSite callSite)
-    {
-        try
-        {
-            return _il.Create(opCode, callSite);
-        }
-        catch (ArgumentException)
-        {
-            throw ExceptionInvalidOperand(opCode);
-        }
     }
 
     private static WeavingException ExceptionInvalidOperand(OpCode opCode)

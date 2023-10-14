@@ -1,8 +1,4 @@
-﻿using FieldAttributes = Mono.Cecil.FieldAttributes;
-using PropertyAttributes = Mono.Cecil.PropertyAttributes;
-using TypeAttributes = Mono.Cecil.TypeAttributes;
-
-namespace ILAccess.Fody;
+﻿namespace ILAccess.Fody;
 
 public class ModuleWeaver : BaseModuleWeaver
 {
@@ -11,10 +7,7 @@ public class ModuleWeaver : BaseModuleWeaver
     public ModuleWeaver()
     {
         _log = new Logger(this);
-        _stringType = ModuleDefinition.ImportReference(typeof(string));
     }
-
-    private readonly TypeReference _stringType;
 
     public override void Execute()
     {
@@ -38,14 +31,11 @@ public class ModuleWeaver : BaseModuleWeaver
 
         if (emitted)
         {
+            var stringType = ModuleDefinition.ImportType<string>();
             var attr = GetOrAddIgnoresAccessChecksToAttribute();
-            var ctors = attr.GetConstructors();
-            var ctor = ctors
-                .Where(m => m.Parameters.Count == 1)
-                .FirstOrDefault(m => m.Parameters[0].ParameterType.IsEqualTo(_stringType));
-
+            var ctor = attr.GetConstructor(stringType);
             var attribute = new CustomAttribute(ctor);
-            var arg = new CustomAttributeArgument(_stringType, ModuleDefinition.Assembly.Name.Name);
+            var arg = new CustomAttributeArgument(stringType, ModuleDefinition.Assembly.Name.Name);
             attribute.ConstructorArguments.Add(arg);
             ModuleDefinition.Assembly.CustomAttributes.Add(attribute);
         }
@@ -59,13 +49,15 @@ public class ModuleWeaver : BaseModuleWeaver
         if (attr != null)
             return attr;
 
-        var attrType = ModuleDefinition.ImportReference(typeof(Attribute));
-        var typeDef = new TypeDefinition(ns, name, TypeAttributes.Class | TypeAttributes.NotPublic, attrType);
-        var property = new PropertyDefinition("AssemblyName", PropertyAttributes.None, _stringType);
-        var fieldName = "<" + property.Name + ">k__BackingField";
-        var field = new FieldDefinition(fieldName, FieldAttributes.CompilerControlled, _stringType);
-
-        return typeDef;
+        var type = ModuleDefinition.AddType(ns, name, TypeAttributes.Class | TypeAttributes.NotPublic, typeof(Attribute));
+        var property = type.AddAutoProperty<string>("AssemblyName", setterAttributes: MethodAttributes.Private);
+        var ctor = type.AddConstructor(instructions: new[]
+        {
+            Instruction.Create(OpCodes.Ldarg_1),
+            Instruction.Create(OpCodes.Callvirt, property.GetMethod),
+        });
+        ctor.AddParameter<string>("assemblyName");
+        return type;
     }
 
     public override IEnumerable<string> GetAssembliesForScanning() => Enumerable.Empty<string>();

@@ -1,4 +1,8 @@
-﻿namespace ILAccess.Tests;
+﻿using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
+using ILAccess.Fody.Processing;
+
+namespace ILAccess.Tests;
 
 public class AssemblyTests
 {
@@ -11,6 +15,7 @@ public class AssemblyTests
         using var peReader = new PEReader(fileStream);
         var metadataReader = peReader.GetMetadataReader();
 
+        // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
         foreach (var typeRefHandle in metadataReader.TypeReferences)
         {
             var typeRef = metadataReader.GetTypeReference(typeRefHandle);
@@ -27,8 +32,16 @@ public class AssemblyTests
     [Fact]
     public void ShouldNotAddReferenceToPrivateCoreLib()
     {
-        AssemblyToProcessFixture.ResultModule.AssemblyReferences.ShouldNotContain(i => i.Name == "System.Private.CoreLib");
-        StandardAssemblyToProcessFixture.ResultModule.AssemblyReferences.ShouldNotContain(i => i.Name == "System.Private.CoreLib");
-        InvalidAssemblyToProcessFixture.ResultModule.AssemblyReferences.ShouldNotContain(i => i.Name == "System.Private.CoreLib");
+        var modules = new[]
+        {
+            AssemblyToProcessFixture.ResultModule,
+            StandardAssemblyToProcessFixture.ResultModule,
+            InvalidAssemblyToProcessFixture.ResultModule,
+        };
+
+        foreach (var module in modules)
+        {
+            module.AssemblyReferences.ShouldNotContain(m => m.Name == AssemblyNames.CoreLib);
+        }
     }
 }

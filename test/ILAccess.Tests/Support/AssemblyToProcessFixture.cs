@@ -2,9 +2,9 @@
 using System.Text;
 using Fody;
 using ILAccess.Fody.Extensions;
+using ILAccess.Fody.Processing;
 using ILAccess.Tests.AssemblyToProcess;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
 using ModuleDefinition = Mono.Cecil.ModuleDefinition;
 using SequencePoint = Mono.Cecil.Cil.SequencePoint;
 
@@ -58,7 +58,7 @@ public static class AssemblyToProcessFixture
     internal static void BeforeExecuteCallback(ModuleDefinition module)
     {
         // This reference is added by Fody, it's not supposed to be there
-        module.AssemblyReferences.RemoveWhere(i => string.Equals(i.Name, "System.Private.CoreLib", StringComparison.OrdinalIgnoreCase));
+        module.AssemblyReferences.RemoveWhere(m => m.Name == AssemblyNames.CoreLib);
     }
 
     internal class GuardedWeaver : ModuleWeaver

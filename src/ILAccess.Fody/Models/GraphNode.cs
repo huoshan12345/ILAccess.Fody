@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace ILAccess.Fody.Models;
+﻿namespace ILAccess.Fody.Models;
 
 public static class GraphNode
 {

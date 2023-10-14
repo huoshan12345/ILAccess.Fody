@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <DisableFody>true</DisableFody>
     <_RefProject>ILAccess.Tests.AssemblyToProcess</_RefProject>
     <_RefProjectDir>..\$(_RefProject)\</_RefProjectDir>

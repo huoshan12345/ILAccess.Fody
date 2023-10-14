@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace ILAccess.Fody.Support;
 
 internal sealed class ReferenceEqualityComparer<T> : IEqualityComparer<T> where T : class

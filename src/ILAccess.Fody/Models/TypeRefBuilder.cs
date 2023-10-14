@@ -48,8 +48,8 @@ internal class TypeRefBuilder
 
     private static TypeReference? TryFindDeclaredType(AssemblyDefinition assembly, string typeName)
         => assembly.Modules
-            .Select(m => m.GetType(typeName, false) ?? m.GetType(typeName, true))
-            .FirstOrDefault(t => t != null);
+                   .Select(m => m.GetType(typeName, false) ?? m.GetType(typeName, true))
+                   .FirstOrDefault(t => t != null);
 
     private static TypeReference? TryFindForwardedType(AssemblyDefinition assembly, string typeName, ModuleDefinition targetModule)
     {
@@ -128,7 +128,8 @@ internal class TypeRefBuilder
         _modifiers.Add(new Modifier(modifierType, required));
     }
 
-    public override string ToString() => GetDisplayName();
+    public override string ToString()
+        => GetDisplayName();
 
     private abstract class TypeRefResolver
     {
@@ -145,7 +146,7 @@ internal class TypeRefBuilder
 
         public ConstantTypeRefResolver(TypeReference typeRef)
         {
-            if (typeRef.MetadataType == MetadataType.Class && !(typeRef is TypeDefinition))
+            if (typeRef.MetadataType == MetadataType.Class && typeRef is not TypeDefinition)
             {
                 // TypeRefs from different assemblies get imported as MetadataType.Class
                 // since this information is not stored in the assembly metadata.
@@ -186,45 +187,32 @@ internal class TypeRefBuilder
 
         public override TypeReference? TryResolve(ModuleDefinition module, IGenericParameterProvider context)
         {
-            switch (_type)
+            if (_type == GenericParameterType.Type && context.GenericParameterType != GenericParameterType.Type && context is MemberReference member)
+                context = member.DeclaringType;
+
+            if (!context.HasGenericParameters || context.GenericParameterType != _type)
+                return null;
+
+            if (_index >= context.GenericParameters.Count)
+                return null;
+
+            context = context switch
             {
-                case GenericParameterType.Type:
-                {
-                    if (context.GenericParameterType != GenericParameterType.Type && context is MemberReference member)
-                        context = member.DeclaringType;
+                TypeReference type => module.ImportReference(type),
+                MethodReference method => module.ImportReference(method),
+                _ => throw new ArgumentException($"Unexpected generic parameter provider type: {context.GetType().Name}")
+            };
 
-                    if (!context.HasGenericParameters || context.GenericParameterType != GenericParameterType.Type)
-                        return null;
-
-                    if (_index >= context.GenericParameters.Count)
-                        return null;
-
-                    return module.ImportReference(context.GenericParameters[_index]);
-                }
-
-                case GenericParameterType.Method:
-                {
-                    if (!context.HasGenericParameters || context.GenericParameterType != GenericParameterType.Method)
-                        return null;
-
-                    if (_index >= context.GenericParameters.Count)
-                        return null;
-
-                    return module.ImportReference(context.GenericParameters[_index]);
-                }
-
-                default:
-                    throw new InvalidOperationException("Invalid generic parameter type");
-            }
+            return module.ImportReference(context.GenericParameters[_index]);
         }
 
         public override string GetDisplayName()
         {
             return _type switch
             {
-                GenericParameterType.Type   => "!" + _index,
+                GenericParameterType.Type => "!" + _index,
                 GenericParameterType.Method => "!!" + _index,
-                _                           => throw new ArgumentOutOfRangeException()
+                _ => throw new ArgumentOutOfRangeException()
             };
         }
     }
