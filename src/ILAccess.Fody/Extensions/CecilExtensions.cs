@@ -1,4 +1,6 @@
-﻿namespace ILAccess.Fody.Extensions;
+﻿using System.Reflection;
+
+namespace ILAccess.Fody.Extensions;
 
 internal static partial class CecilExtensions
 {
@@ -486,5 +488,12 @@ internal static partial class CecilExtensions
         }
 
         return false;
+    }
+
+    public static AssemblyDefinition ResolveAssembly(this ModuleDefinition module, string name)
+    {
+        var assemblyRef = module.AssemblyReferences.FirstOrDefault(m => m.Name == name) ?? throw new WeavingException($"Could not find assembly reference '{name}'");
+        var assembly = module.AssemblyResolver.Resolve(assemblyRef) ?? throw new WeavingException($"Could not resolve assembly {assemblyRef.Name}");
+        return assembly;
     }
 }

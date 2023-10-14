@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace></RootNamespace>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>enable</Nullable>
     <SignAssembly>true</SignAssembly>
@@ -24,11 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ILAccess.Fody\ILAccess.Fody.csproj" PrivateAssets="All" />
-  </ItemGroup>
-
-  <ItemGroup Label="FilesToCopy">
-    <Content Include="System\Runtime\CompilerServices\IgnoresAccessChecksToAttribute.fs" Pack="true" BuildAction="None" PackagePath="content\" />
-    <Content Include="System\Runtime\CompilerServices\IgnoresAccessChecksToAttribute.cs" Pack="true" BuildAction="None" PackagePath="content\" />
   </ItemGroup>
 
 </Project>

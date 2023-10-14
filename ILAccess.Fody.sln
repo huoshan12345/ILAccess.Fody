@@ -43,7 +43,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CFB3FFC9-C653-4830-A696-CE150BECC295}"
 	ProjectSection(SolutionItems) = preProject
 		src\Directory.Build.props = src\Directory.Build.props
-		src\LocalInclude.props = src\LocalInclude.props
 	EndProjectSection
 EndProject
 Global

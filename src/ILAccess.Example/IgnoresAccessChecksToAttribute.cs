@@ -1,4 +1,5 @@
-﻿namespace System.Runtime.CompilerServices;
+﻿// ReSharper disable once CheckNamespace
+namespace System.Runtime.CompilerServices;
 
 /// <summary>
 /// Allows the current assembly to access the internal types of a specified assembly that are ordinarily invisible.

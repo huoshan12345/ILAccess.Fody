@@ -1,6 +1,4 @@
-﻿using Mono.Cecil.Rocks;
-
-namespace ILAccess.Fody.Models;
+﻿namespace ILAccess.Fody.Models;
 
 internal sealed class LocalVarBuilder
 {

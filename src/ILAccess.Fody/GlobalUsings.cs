@@ -13,4 +13,5 @@ global using ILAccess.Fody.Processing;
 global using ILAccess.Fody.Support;
 global using Mono.Cecil;
 global using Mono.Cecil.Cil;
+global using Mono.Cecil.Rocks;
 global using Mono.Collections.Generic;

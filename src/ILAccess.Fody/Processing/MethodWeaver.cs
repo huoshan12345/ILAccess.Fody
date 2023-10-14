@@ -1,5 +1,4 @@
-﻿using Mono.Cecil.Cil;
-using static ILAccess.Fody.Processing.WeaverAnchors.MethodNames;
+﻿using static ILAccess.Fody.Processing.WeaverAnchors.MethodNames;
 
 namespace ILAccess.Fody.Processing;
 
@@ -9,10 +8,7 @@ internal sealed class MethodWeaver
     private readonly MethodDefinition _method;
     private readonly MethodWeaverLogger _log;
     private readonly WeaverILProcessor _il;
-    private readonly References _references;
     private Collection<Instruction> Instructions => _method.Body.Instructions;
-    private TypeReferences Types => _references.Types;
-    private MethodReferences Methods => _references.Methods;
 
     public MethodWeaver(ModuleDefinition module, MethodDefinition method, ILogger log)
     {
@@ -20,10 +16,9 @@ internal sealed class MethodWeaver
         _method = method;
         _il = new WeaverILProcessor(method);
         _log = new MethodWeaverLogger(log, _method);
-        _references = new References(module);
     }
 
-    public static bool HasLibReference(ModuleDefinition module, MethodDefinition method)
+    private static bool HasLibReference(ModuleDefinition module, MethodDefinition method)
     {
         if (method.IsWeaverAssemblyReferenced(module))
             return true;
@@ -49,11 +44,14 @@ internal sealed class MethodWeaver
         return false;
     }
 
-    public void Process()
+    public bool Process()
     {
+        if (HasLibReference(_module, _method) == false)
+            return false;
+
         try
         {
-            ProcessImpl();
+            return ProcessImpl();
         }
         catch (InstructionWeavingException ex)
         {
@@ -85,10 +83,11 @@ internal sealed class MethodWeaver
                };
     }
 
-    private void ProcessImpl()
+    private bool ProcessImpl()
     {
         var instruction = Instructions.FirstOrDefault();
         Instruction? nextInstruction;
+        var emitted = false;
 
         for (; instruction != null; instruction = nextInstruction)
         {
@@ -100,6 +99,7 @@ internal sealed class MethodWeaver
             try
             {
                 nextInstruction = ProcessAnchorMethod(instruction);
+                emitted = true;
             }
             catch (InstructionWeavingException)
             {
@@ -114,6 +114,7 @@ internal sealed class MethodWeaver
                 throw new InstructionWeavingException(instruction, $"Unexpected error occured while processing method {_method.FullName} at instruction {instruction}: {ex}");
             }
         }
+        return emitted;
     }
 
     private Instruction? ProcessAnchorMethod(Instruction instruction)
@@ -190,7 +191,7 @@ internal sealed class MethodWeaver
             _il.Remove(anchor.Previous);
         }
 
-        var code = (field.IsStatic, isGet)switch
+        var code = (field.IsStatic, isGet) switch
         {
             (true, true) => OpCodes.Ldsfld,
             (true, false) => OpCodes.Stsfld,

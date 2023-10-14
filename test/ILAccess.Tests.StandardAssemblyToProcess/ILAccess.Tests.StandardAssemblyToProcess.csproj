@@ -1,7 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\..\src\LocalInclude.props" />
-
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <DisableFody>true</DisableFody>

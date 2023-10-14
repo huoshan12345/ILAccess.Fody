@@ -8,7 +8,6 @@ internal sealed class WeaverILProcessor
     private readonly HashSet<Instruction> _referencedInstructions;
 
     public MethodDefinition Method { get; }
-
     public MethodLocals Locals { get; }
 
     public WeaverILProcessor(MethodDefinition method)

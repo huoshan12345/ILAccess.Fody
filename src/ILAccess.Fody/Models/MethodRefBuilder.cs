@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using Mono.Cecil.Rocks;
 
 namespace ILAccess.Fody.Models;
 
