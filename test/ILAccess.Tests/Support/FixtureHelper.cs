@@ -7,8 +7,8 @@ internal static class FixtureHelper
     public static string IsolateAssembly<T>()
     {
         var assembly = typeof(T).Assembly;
-        var assemblyPath = assembly.Location;
-        var assemblyDir = Path.GetDirectoryName(assemblyPath)!;
+        var assemblyDir = AppDomain.CurrentDomain.BaseDirectory;
+        var assemblyPath = Path.Combine(assemblyDir, Path.GetFileName(assembly.Location));
         var rootTestDir = Path.Combine(assemblyDir, "WeavingTest");
         var asmTestDir = Path.Combine(rootTestDir, Path.GetFileNameWithoutExtension(assemblyPath));
 
