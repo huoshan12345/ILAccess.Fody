@@ -1,5 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\..\src\LocalInclude.props" />
+
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <DisableFody>true</DisableFody>
@@ -14,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="xunit" Version="2.5.1" />
+    <PackageReference Include="xunit" Version="2.5.2" />
     <ProjectReference Include="..\..\src\ILAccess\ILAccess.csproj" />
   </ItemGroup>
 

@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using ILAccess.Fody.Extensions;
 using Mono.Cecil.Rocks;
 
 namespace ILAccess.Fody.Models;
@@ -8,7 +7,7 @@ internal class MethodRefBuilder
 {
     private readonly MethodReference _method;
 
-    private MethodRefBuilder(ModuleDefinition module, TypeReference typeRef, MethodReference method)
+    internal MethodRefBuilder(ModuleDefinition module, TypeReference typeRef, MethodReference method)
     {
         _method = module.ImportReference(module.ImportReference(method.MapToScope(typeRef.Scope, module)).MakeGeneric(typeRef));
     }
@@ -119,6 +118,16 @@ internal class MethodRefBuilder
         }
 
         return sb.ToString();
+    }
+
+    public static MethodRefBuilder PropertySet(ModuleDefinition module, TypeReference typeRef, string propertyName)
+    {
+        var property = FindProperty(typeRef, propertyName);
+
+        if (property.SetMethod == null)
+            throw new WeavingException($"Property '{propertyName}' in type {typeRef.FullName} has no setter");
+
+        return new MethodRefBuilder(module, typeRef, property.SetMethod);
     }
 
     public static MethodRefBuilder PropertyGet(ModuleDefinition module, TypeReference typeRef, string propertyName)

@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
-using ILAccess.Fody.Extensions;
 using Mono.Cecil.Rocks;
 
 namespace ILAccess.Fody.Models;

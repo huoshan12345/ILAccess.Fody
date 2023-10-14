@@ -1,6 +1,4 @@
-﻿using ILAccess.Fody.Extensions;
-
-namespace ILAccess.Fody.Processing;
+﻿namespace ILAccess.Fody.Processing;
 
 internal class MethodLocals
 {

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <RootNamespace></RootNamespace>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>enable</Nullable>
     <SignAssembly>true</SignAssembly>
@@ -12,13 +13,22 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Copyright>Copyright $([System.DateTime]::UtcNow.ToString(yyyy)).</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <WeaverPropsFile>ILAccess.props</WeaverPropsFile>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Fody" Version="6.8.0" PrivateAssets="none" />
     <PackageReference Include="FodyPackaging" Version="6.8.0" PrivateAssets="All" />
     <PackageReference Include="IsExternalInit" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\ILAccess.Fody\ILAccess.Fody.csproj" PrivateAssets="All" />
   </ItemGroup>
+
+  <ItemGroup Label="FilesToCopy">
+    <Content Include="System\Runtime\CompilerServices\IgnoresAccessChecksToAttribute.fs" Pack="true" BuildAction="None" PackagePath="content\" />
+    <Content Include="System\Runtime\CompilerServices\IgnoresAccessChecksToAttribute.cs" Pack="true" BuildAction="None" PackagePath="content\" />
+  </ItemGroup>
+
 </Project>

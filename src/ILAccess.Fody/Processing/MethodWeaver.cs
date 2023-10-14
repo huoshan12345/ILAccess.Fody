@@ -1,5 +1,5 @@
-﻿using ILAccess.Fody.Extensions;
-using Mono.Collections.Generic;
+﻿using Mono.Cecil.Cil;
+using static ILAccess.Fody.Processing.WeaverAnchors.MethodNames;
 
 namespace ILAccess.Fody.Processing;
 
@@ -118,8 +118,6 @@ internal sealed class MethodWeaver
 
     private Instruction? ProcessAnchorMethod(Instruction instruction)
     {
-        var anchorMethod = (MethodReference)instruction.Operand;
-
         var next = instruction.Next;
         if (next == null)
             throw NoILAccessorMethodInvocationException();
@@ -128,7 +126,7 @@ internal sealed class MethodWeaver
         if (IsStloc(next))
             throw NoILAccessorMethodInvocationException();
 
-        // obj.Base<T>().SomeMethod();
+        // obj.ILAccess<T>().SomeMethod();
         if (IsCallAndPop(next) && IsILAccessorMethod(next) == false)
         {
             if (IsAnchorMethodCall(next))
@@ -149,16 +147,84 @@ internal sealed class MethodWeaver
         throw NoILAccessorMethodInvocationException();
     }
 
+    private Instruction EmitPropertyInstructions(Instruction anchor, PropertyDefinition property, bool isGet)
+    {
+        if (isGet)
+        {
+            var method = property.BuildGetter().Resolve();
+            if (method.IsStatic)
+            {
+                // call         void ILAccess.Example.TestModel::set_PublicStaticProperty(int32)
+                _il.Remove(anchor.Previous);
+                return Instruction.Create(OpCodes.Call, method);
+            }
+            else
+            {
+                // ldloc.0      // obj
+                // callvirt instance void ILAccess.Example.TestModel::set_PublicProperty(int32)
+                return Instruction.Create(OpCodes.Callvirt, method);
+            }
+        }
+        else
+        {
+            var method = property.BuildSetter().Resolve();
+            if (method.IsStatic)
+            {
+                // call         void ILAccess.Example.TestModel::set_PublicStaticProperty(int32)
+                _il.Remove(anchor.Previous);
+                return Instruction.Create(OpCodes.Call, method);
+            }
+            else
+            {
+                // ldloc.0      // obj
+                // callvirt instance void ILAccess.Example.TestModel::set_PublicProperty(int32)
+                return Instruction.Create(OpCodes.Callvirt, method);
+            }
+        }
+    }
+
+    private Instruction EmitFieldInstructions(Instruction anchor, FieldDefinition field, bool isGet)
+    {
+        if (field.IsStatic)
+        {
+            _il.Remove(anchor.Previous);
+        }
+
+        var code = (field.IsStatic, isGet)switch
+        {
+            (true, true) => OpCodes.Ldsfld,
+            (true, false) => OpCodes.Stsfld,
+            (false, true) => OpCodes.Ldfld,
+            (false, false) => OpCodes.Stfld,
+        };
+        return Instruction.Create(code, field);
+    }
+
     private Instruction EmitILAccessInstructions(Instruction anchor, Instruction invokeInstruction)
     {
-        _il.Remove(anchor);
+        var next = anchor.Next;
+        if (next.OpCode != OpCodes.Ldstr)
+            throw new InvalidOperationException("The name of property/field to be invoked should be a constant.");
 
-        var instructions = new List<Instruction>(4)
+        var typeRef = ((GenericInstanceMethod)anchor.Operand).GenericArguments[0];
+        var name = (string)next.Operand;
+        var method = (MethodReference)invokeInstruction.Operand;
+        var typeDef = typeRef.ResolveRequiredType();
+        var properties = typeDef.Properties.Where(p => p.Name == name).ToArray();
+        var fields = typeDef.Fields.Where(p => p.Name == name).ToArray();
+        var isGet = method.Name == GetValue;
+
+        var newInstruction = (properties.Length, fields.Length) switch
         {
-
+            (0, 0) => throw new InvalidOperationException($"Property or field '{name}' not found in type {typeDef.FullName}"),
+            (1, 0) => EmitPropertyInstructions(anchor, properties[0], isGet),
+            (0, 1) => EmitFieldInstructions(anchor, fields[0], isGet),
+            _ => throw new InvalidOperationException($"Ambiguous property or field '{name}' in type {typeDef.FullName}"),
         };
 
-        var cur = _il.InsertAfter(invokeInstruction, instructions);
+        _il.Remove(anchor);
+        _il.Remove(next);
+        var cur = _il.InsertAfter(invokeInstruction, newInstruction);
         _il.Remove(invokeInstruction);
         return cur;
     }
@@ -200,11 +266,5 @@ internal sealed class MethodWeaver
     private static Exception NoILAccessorMethodInvocationException()
     {
         return new InvalidOperationException($"The method {WeaverAnchors.MethodCall} requires one method declared in {WeaverAnchors.TypeName}<T> to be invoked fluently");
-    }
-
-    private static void EnsureNonAbstract(MethodDefinition method)
-    {
-        if (method.IsAbstract)
-            throw new InvalidOperationException($"The abstract interface method {method.FullName} cannot be invoked");
     }
 }

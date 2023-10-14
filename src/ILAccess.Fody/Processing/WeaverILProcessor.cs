@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using ILAccess.Fody.Extensions;
 
 namespace ILAccess.Fody.Processing;
 

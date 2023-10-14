@@ -1,5 +1,4 @@
 ﻿using System.Linq.Expressions;
-using ILAccess.Fody.Extensions;
 
 namespace ILAccess.Fody.Support;
 

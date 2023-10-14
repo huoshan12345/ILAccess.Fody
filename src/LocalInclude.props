@@ -1,0 +1,10 @@
+<Project>
+  <ItemGroup>
+    <Compile Condition="'$(ProjectExt)' == '.csproj'"
+             Include="..\..\src\ILAccess\System\Runtime\CompilerServices\IgnoresAccessChecksToAttribute.cs"
+             Link="ILAccess\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Condition="'$(ProjectExt)' == '.fsproj'"
+             Include="..\..\src\ILAccess\System\Runtime\CompilerServices\IgnoresAccessChecksToAttribute.fs"
+             Link="ILAccess\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>
