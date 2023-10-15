@@ -10,7 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="$(_RefProjectDir)**\*.cs" Exclude="$(_RefProjectDir)obj\**;$(_RefProjectDir)AssemblyToProcessReference.cs" Link="$(_RefProject)\%(RecursiveDir)%(Filename)%(Extension)" />
+    <ProjectCapability Remove="TestContainer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(_RefProjectDir)**\*.cs" Exclude="$(_RefProjectDir)obj\**;$(_RefProjectDir)AssemblyToProcessReference.cs;$(_RefProjectDir)IgnoresAccessChecksToAttribute.cs" Link="$(_RefProject)\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

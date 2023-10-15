@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectCapability Remove="TestContainer" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="..\ILAccess.Tests.AssemblyToProcess\~TestTypes\*.cs" Link="AssemblyToProcess\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
