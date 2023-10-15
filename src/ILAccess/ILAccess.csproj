@@ -12,7 +12,6 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Copyright>Copyright $([System.DateTime]::UtcNow.ToString(yyyy)).</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <WeaverPropsFile>ILAccess.props</WeaverPropsFile>
   </PropertyGroup>
 
   <ItemGroup>
