@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>enable</Nullable>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
@@ -12,12 +12,17 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Copyright>Copyright $([System.DateTime]::UtcNow.ToString(yyyy)).</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <WeaverPropsFile>ILAccess.props</WeaverPropsFile>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Fody" Version="6.8.0" PrivateAssets="none" />
     <PackageReference Include="FodyPackaging" Version="6.8.0" PrivateAssets="All" />
+    <PackageReference Include="IsExternalInit" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\ILAccess.Fody\ILAccess.Fody.csproj" PrivateAssets="All" />
   </ItemGroup>
+
 </Project>

@@ -1,62 +1,39 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
+#pragma warning disable CA2211
+#pragma warning disable IDE0051
 
-namespace ILAccess.Example
+namespace ILAccess.Example;
+
+[SuppressMessage("ReSharper", "UnusedMember.Global")]
+[SuppressMessage("ReSharper", "UnusedMember.Local")]
+public class TestModel
 {
-    public interface IService
-    {
-        int Property { get; }
-        void Method();
-    }
+    public int PublicProperty { get; set; } = 1;
+    public static int PublicStaticProperty { get; set; } = 1;
 
-    public interface IService1 : IService
-    {
-        public const string Name = nameof(IService1) + "." + nameof(Method);
-        int IService.Property => 1;
-        void IService.Method() => Console.WriteLine(Name);
-    }
+    private static int PrivateStaticProperty { get; set; } = 1;
+    private int PrivateProperty { get; set; } = 1;
 
-    public interface IService2 : IService
-    {
-        public const string Name = nameof(IService2) + "." + nameof(Method);
-        int IService.Property => 2;
-        void IService.Method() => Console.WriteLine(Name);
-    }
+    public static int PublicStaticField = 1;
+    public int PublicField = 1;
+}
 
-    public interface IService3
+internal class Program
+{
+    private static void Main(string[] args)
     {
-        void Method<T>() => Console.WriteLine(typeof(T).Name);
-    }
+        var obj = new TestModel();
 
-    public interface IService4<T>
-    {
-        void Method() => Console.WriteLine(typeof(T).Name);
-    }
-
-    public class Service : IService1, IService2, IService3, IService4<string>
-    {
-        public void Method() => throw new InvalidOperationException();
-        public int Property => throw new InvalidOperationException();
-
-        public void Invoke()
         {
-            Console.WriteLine("Start invoking...");
-            this.Base<IService1>().Method();
-            this.Base<IService2>().Method();
-            this.Base<IService3>().Method<int>();
-            this.Base<IService4<string>>().Method();
-            Console.WriteLine(this.Base<IService1>().Property);
-            Console.WriteLine(this.Base<IService2>().Property);
-            Console.WriteLine("End invoking.");
+            var value = obj.ILAccess().GetValue<int>("PrivateProperty");
+            Console.WriteLine("PrivateProperty: " + value);
         }
-    }
-
-    internal class Program
-    {
-        private static void Main(string[] args)
         {
-            var service = new Service();
-            service.Invoke();
-            Console.Read();
+            var value = obj.ILAccess().GetValue<int>("PrivateStaticProperty");
+            Console.WriteLine("PrivateStaticProperty: " + value);
         }
+
+        Console.Read();
     }
 }

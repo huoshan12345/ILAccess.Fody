@@ -1,26 +1,10 @@
+[*.cs]
 
-root = true
+# IDE0079: Remove unnecessary suppression
+dotnet_diagnostic.IDE0079.severity = none
 
-[*]
-trim_trailing_whitespace = true
-insert_final_newline = true
-end_of_line = crlf
+# CS8321: Local function is declared but never used
+dotnet_diagnostic.CS8321.severity = none
 
-[*.{cs,csx,xaml,cake,tt}]
-indent_size = 4
-indent_style = space
-
-[*.{config,nuspec,resx}]
-indent_size = 2
-indent_style = space
-
-[*.{csproj,vcxproj,props,targets}]
-indent_size = 2
-indent_style = space
-insert_final_newline = false
-
-[*.sln]
-indent_style = tab
-
-[*.md]
-trim_trailing_whitespace = false
+# xUnit1004: Test methods should not be skipped
+dotnet_diagnostic.xUnit1004.severity = none

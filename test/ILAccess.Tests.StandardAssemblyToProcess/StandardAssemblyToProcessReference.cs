@@ -1,6 +1,5 @@
-namespace ILAccess.Tests.StandardAssemblyToProcess
+namespace ILAccess.Tests.StandardAssemblyToProcess;
+
+public abstract class StandardAssemblyToProcessReference
 {
-    public abstract class StandardAssemblyToProcessReference
-    {
-    }
 }

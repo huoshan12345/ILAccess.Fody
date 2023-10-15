@@ -1,266 +1,165 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using Fody;
-using ILAccess.Fody.Extensions;
-using ILAccess.Fody.Models;
-using ILAccess.Fody.Support;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
+﻿namespace ILAccess.Fody.Processing;
 
-namespace ILAccess.Fody.Processing
+internal sealed class WeaverILProcessor
 {
-    internal sealed class WeaverILProcessor
+    private readonly ILProcessor _il;
+    private readonly HashSet<Instruction> _referencedInstructions;
+
+    public MethodDefinition Method { get; }
+    public MethodLocals Locals { get; }
+
+    public WeaverILProcessor(MethodDefinition method)
     {
-        private readonly ILProcessor _il;
-        private readonly HashSet<Instruction> _referencedInstructions;
+        Method = method;
+        Locals = new MethodLocals(method);
+        _il = method.Body.GetILProcessor();
+        _referencedInstructions = GetAllReferencedInstructions();
+    }
 
-        public MethodDefinition Method { get; }
+    public void Remove(Instruction instruction)
+    {
+        var newRef = instruction.Next ?? instruction.Previous ?? throw new InstructionWeavingException(instruction, "Cannot remove single instruction of method");
+        _il.Remove(instruction);
+        UpdateReferences(instruction, newRef);
+    }
 
-        public MethodLocals Locals { get; }
+    public HashSet<Instruction> GetAllReferencedInstructions()
+    {
+        var refs = new HashSet<Instruction>(ReferenceEqualityComparer<Instruction>.Instance);
 
-        public WeaverILProcessor(MethodDefinition method)
+        if (_il.Body.HasExceptionHandlers)
         {
-            Method = method;
-            Locals = new MethodLocals(method);
-            _il = method.Body.GetILProcessor();
-            _referencedInstructions = GetAllReferencedInstructions();
+            foreach (var handler in _il.Body.ExceptionHandlers)
+                refs.UnionWith(handler.GetInstructions());
         }
 
-        public void Remove(Instruction instruction)
+        foreach (var instruction in _il.Body.Instructions)
         {
-            var newRef = instruction.Next ?? instruction.Previous ?? throw new InstructionWeavingException(instruction, "Cannot remove single instruction of method");
-            _il.Remove(instruction);
-            UpdateReferences(instruction, newRef);
-        }
-
-        public HashSet<Instruction> GetAllReferencedInstructions()
-        {
-            var refs = new HashSet<Instruction>(ReferenceEqualityComparer<Instruction>.Instance);
-
-            if (_il.Body.HasExceptionHandlers)
+            switch (instruction.Operand)
             {
-                foreach (var handler in _il.Body.ExceptionHandlers)
-                    refs.UnionWith(handler.GetInstructions());
+                case Instruction target:
+                    refs.Add(target);
+                    break;
+
+                case Instruction[] targets:
+                    refs.UnionWith(targets.Where(t => t != null));
+                    break;
             }
-
-            foreach (var instruction in _il.Body.Instructions)
-            {
-                switch (instruction.Operand)
-                {
-                    case Instruction target:
-                        refs.Add(target);
-                        break;
-
-                    case Instruction[] targets:
-                        refs.UnionWith(targets.Where(t => t != null));
-                        break;
-                }
-            }
-
-            return refs;
         }
+
+        return refs;
+    }
         
-        private void UpdateReferences(Instruction oldInstruction, Instruction newInstruction)
+    private void UpdateReferences(Instruction oldInstruction, Instruction newInstruction)
+    {
+        if (!_referencedInstructions.Contains(oldInstruction))
+            return;
+
+        if (_il.Body.HasExceptionHandlers)
         {
-            if (!_referencedInstructions.Contains(oldInstruction))
-                return;
-
-            if (_il.Body.HasExceptionHandlers)
+            foreach (var handler in _il.Body.ExceptionHandlers)
             {
-                foreach (var handler in _il.Body.ExceptionHandlers)
-                {
-                    if (handler.TryStart == oldInstruction)
-                        handler.TryStart = newInstruction;
+                if (handler.TryStart == oldInstruction)
+                    handler.TryStart = newInstruction;
 
-                    if (handler.TryEnd == oldInstruction)
-                        handler.TryEnd = newInstruction;
+                if (handler.TryEnd == oldInstruction)
+                    handler.TryEnd = newInstruction;
 
-                    if (handler.FilterStart == oldInstruction)
-                        handler.FilterStart = newInstruction;
+                if (handler.FilterStart == oldInstruction)
+                    handler.FilterStart = newInstruction;
 
-                    if (handler.HandlerStart == oldInstruction)
-                        handler.HandlerStart = newInstruction;
+                if (handler.HandlerStart == oldInstruction)
+                    handler.HandlerStart = newInstruction;
 
-                    if (handler.HandlerEnd == oldInstruction)
-                        handler.HandlerEnd = newInstruction;
-                }
-            }
-
-            foreach (var instruction in _il.Body.Instructions)
-            {
-                switch (instruction.Operand)
-                {
-                    case Instruction target when target == oldInstruction:
-                        instruction.Operand = newInstruction;
-                        break;
-
-                    case Instruction[] targets:
-                        for (var i = 0; i < targets.Length; ++i)
-                        {
-                            if (targets[i] == oldInstruction)
-                                targets[i] = newInstruction;
-                        }
-
-                        break;
-                }
-            }
-
-            _referencedInstructions.Remove(oldInstruction);
-            _referencedInstructions.Add(newInstruction);
-        }
-
-        public Instruction Create(OpCode opCode, TypeReference typeRef)
-        {
-            try
-            {
-                return _il.Create(opCode, typeRef);
-            }
-            catch (ArgumentException)
-            {
-                throw ExceptionInvalidOperand(opCode);
+                if (handler.HandlerEnd == oldInstruction)
+                    handler.HandlerEnd = newInstruction;
             }
         }
 
-        public Instruction Create(OpCode opCode, MethodReference methodRef)
+        foreach (var instruction in _il.Body.Instructions)
         {
-            try
+            switch (instruction.Operand)
             {
-                return _il.Create(opCode, methodRef);
-            }
-            catch (ArgumentException)
-            {
-                throw ExceptionInvalidOperand(opCode);
+                case Instruction target when target == oldInstruction:
+                    instruction.Operand = newInstruction;
+                    break;
+
+                case Instruction[] targets:
+                    for (var i = 0; i < targets.Length; ++i)
+                    {
+                        if (targets[i] == oldInstruction)
+                            targets[i] = newInstruction;
+                    }
+
+                    break;
             }
         }
 
-        public Instruction Create(OpCode opCode, FieldReference fieldRef)
+        _referencedInstructions.Remove(oldInstruction);
+        _referencedInstructions.Add(newInstruction);
+    }
+
+    private static WeavingException ExceptionInvalidOperand(OpCode opCode)
+    {
+        switch (opCode.OperandType)
         {
-            try
-            {
-                return _il.Create(opCode, fieldRef);
-            }
-            catch (ArgumentException)
-            {
-                throw ExceptionInvalidOperand(opCode);
-            }
+            case OperandType.InlineNone:
+                return new WeavingException($"Opcode {opCode} does not expect an operand");
+
+            case OperandType.InlineBrTarget:
+            case OperandType.ShortInlineBrTarget:
+                return ExpectedOperand("label name");
+
+            case OperandType.InlineField:
+                return ExpectedOperand(KnownNames.Short.FieldRefType);
+
+            case OperandType.InlineI:
+            case OperandType.ShortInlineI:
+            case OperandType.InlineArg:
+            case OperandType.ShortInlineArg:
+                return ExpectedOperand(nameof(Int32));
+
+            case OperandType.InlineI8:
+                return ExpectedOperand(nameof(Int64));
+
+            case OperandType.InlineMethod:
+                return ExpectedOperand(KnownNames.Short.MethodRefType);
+
+            case OperandType.InlineR:
+            case OperandType.ShortInlineR:
+                return ExpectedOperand(nameof(Double));
+
+            case OperandType.InlineSig:
+                return ExpectedOperand(KnownNames.Short.StandAloneMethodSigType);
+
+            case OperandType.InlineString:
+                return ExpectedOperand(nameof(String));
+
+            case OperandType.InlineSwitch:
+                return ExpectedOperand("array of label names");
+
+            case OperandType.InlineType:
+                return ExpectedOperand($"{KnownNames.Short.TypeRefType} or {nameof(Type)}");
+
+            case OperandType.InlineVar:
+            case OperandType.ShortInlineVar:
+                return ExpectedOperand("local variable name or index");
+
+            default:
+                return ExpectedOperand(opCode.OperandType.ToString());
         }
 
-        public Instruction Create(OpCode opCode, Instruction instruction)
-        {
-            try
-            {
-                var result = _il.Create(opCode, instruction);
-                _referencedInstructions.Add(instruction);
-                return result;
-            }
-            catch (ArgumentException)
-            {
-                throw ExceptionInvalidOperand(opCode);
-            }
-        }
+        WeavingException ExpectedOperand(string expected) => new($"Opcode {opCode} expects an operand of type {expected}");
+    }
 
-        public Instruction Create(OpCode opCode, Instruction[] instructions)
-        {
-            try
-            {
-                var result = _il.Create(opCode, instructions);
-                _referencedInstructions.UnionWith(instructions.Where(i => i != null));
-                return result;
-            }
-            catch (ArgumentException)
-            {
-                throw ExceptionInvalidOperand(opCode);
-            }
-        }
+    public Instruction InsertAfter(Instruction target, Instruction instruction)
+    {
+        _il.InsertAfter(target, instruction);
+        return instruction;
+    }
 
-        public Instruction Create(OpCode opCode, VariableDefinition variableDef)
-        {
-            try
-            {
-                return _il.Create(opCode, variableDef);
-            }
-            catch (ArgumentException)
-            {
-                throw ExceptionInvalidOperand(opCode);
-            }
-        }
-
-        public Instruction Create(OpCode opCode, CallSite callSite)
-        {
-            try
-            {
-                return _il.Create(opCode, callSite);
-            }
-            catch (ArgumentException)
-            {
-                throw ExceptionInvalidOperand(opCode);
-            }
-        }
-
-        private static WeavingException ExceptionInvalidOperand(OpCode opCode)
-        {
-            switch (opCode.OperandType)
-            {
-                case OperandType.InlineNone:
-                    return new WeavingException($"Opcode {opCode} does not expect an operand");
-
-                case OperandType.InlineBrTarget:
-                case OperandType.ShortInlineBrTarget:
-                    return ExpectedOperand("label name");
-
-                case OperandType.InlineField:
-                    return ExpectedOperand(KnownNames.Short.FieldRefType);
-
-                case OperandType.InlineI:
-                case OperandType.ShortInlineI:
-                case OperandType.InlineArg:
-                case OperandType.ShortInlineArg:
-                    return ExpectedOperand(nameof(Int32));
-
-                case OperandType.InlineI8:
-                    return ExpectedOperand(nameof(Int64));
-
-                case OperandType.InlineMethod:
-                    return ExpectedOperand(KnownNames.Short.MethodRefType);
-
-                case OperandType.InlineR:
-                case OperandType.ShortInlineR:
-                    return ExpectedOperand(nameof(Double));
-
-                case OperandType.InlineSig:
-                    return ExpectedOperand(KnownNames.Short.StandAloneMethodSigType);
-
-                case OperandType.InlineString:
-                    return ExpectedOperand(nameof(String));
-
-                case OperandType.InlineSwitch:
-                    return ExpectedOperand("array of label names");
-
-                case OperandType.InlineType:
-                    return ExpectedOperand($"{KnownNames.Short.TypeRefType} or {nameof(Type)}");
-
-                case OperandType.InlineVar:
-                case OperandType.ShortInlineVar:
-                    return ExpectedOperand("local variable name or index");
-
-                default:
-                    return ExpectedOperand(opCode.OperandType.ToString());
-            }
-
-            WeavingException ExpectedOperand(string expected) => new($"Opcode {opCode} expects an operand of type {expected}");
-        }
-
-        public Instruction InsertAfter(Instruction target, Instruction instruction)
-        {
-            _il.InsertAfter(target, instruction);
-            return instruction;
-        }
-
-        public Instruction InsertAfter(Instruction target, IEnumerable<Instruction> instructions)
-        {
-            return instructions.Aggregate(target, (current, ins) => InsertAfter(current, ins));
-        }
+    public Instruction InsertAfter(Instruction target, IEnumerable<Instruction> instructions)
+    {
+        return instructions.Aggregate(target, (current, ins) => InsertAfter(current, ins));
     }
 }

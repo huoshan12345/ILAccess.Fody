@@ -1,290 +1,272 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Runtime.ExceptionServices;
-using Fody;
-using ILAccess.Fody.Extensions;
-using ILAccess.Fody.Models;
-using ILAccess.Fody.Support;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
-using Mono.Collections.Generic;
+﻿using static ILAccess.Fody.Processing.WeaverAnchors.MethodNames;
+using CallSite = Mono.Cecil.CallSite;
 
-namespace ILAccess.Fody.Processing
+namespace ILAccess.Fody.Processing;
+
+internal sealed class MethodWeaver
 {
-    internal sealed class MethodWeaver
+    private readonly ModuleDefinition _module;
+    private readonly MethodDefinition _method;
+    private readonly MethodWeaverLogger _log;
+    private readonly WeaverILProcessor _il;
+    private Collection<Instruction> Instructions => _method.Body.Instructions;
+
+    public MethodWeaver(ModuleDefinition module, MethodDefinition method, ILogger log)
     {
-        private const string AnchorMethodDeclaringTypeName = "ILAccess.ObjectExtension";
-        private const string AnchorMethodName = "Base";
+        _module = module;
+        _method = method;
+        _il = new WeaverILProcessor(method);
+        _log = new MethodWeaverLogger(log, _method);
+    }
 
-        private readonly ModuleDefinition _module;
-        private readonly MethodDefinition _method;
-        private readonly MethodWeaverLogger _log;
-        private readonly WeaverILProcessor _il;
-        private readonly References _references;
-        private Collection<Instruction> Instructions => _method.Body.Instructions;
-        private TypeReferences Types => _references.Types;
-        private MethodReferences Methods => _references.Methods;
+    private static bool HasLibReference(ModuleDefinition module, MethodDefinition method)
+    {
+        if (method.IsWeaverAssemblyReferenced(module))
+            return true;
 
-        public MethodWeaver(ModuleDefinition module, MethodDefinition method, ILogger log)
-        {
-            _module = module;
-            _method = method;
-            _il = new WeaverILProcessor(method);
-            _log = new MethodWeaverLogger(log, _method);
-            _references = new References(module);
-        }
-
-        public static bool NeedsProcessing(ModuleDefinition module, MethodDefinition method)
-            => HasLibReference(module, method, out _);
-
-        private static bool HasLibReference(ModuleDefinition module, MethodDefinition method, out Instruction? refInstruction)
-        {
-            refInstruction = null;
-
-            if (method.IsWeaverAssemblyReferenced(module))
-                return true;
-
-            if (!method.HasBody)
-                return false;
-
-            if (method.Body.HasVariables && method.Body.Variables.Any(i => i.VariableType.IsWeaverAssemblyReferenced(module)))
-                return true;
-
-            foreach (var instruction in method.Body.Instructions)
-            {
-                refInstruction = instruction;
-
-                switch (instruction.Operand)
-                {
-                    case MethodReference methodRef when methodRef.IsWeaverAssemblyReferenced(module):
-                    case TypeReference typeRef when typeRef.IsWeaverAssemblyReferenced(module):
-                    case FieldReference fieldRef when fieldRef.IsWeaverAssemblyReferenced(module):
-                    case CallSite callSite when callSite.IsWeaverAssemblyReferenced(module):
-                        return true;
-                }
-            }
-
-            refInstruction = null;
+        if (!method.HasBody)
             return false;
+
+        if (method.Body.HasVariables && method.Body.Variables.Any(i => i.VariableType.IsWeaverAssemblyReferenced(module)))
+            return true;
+
+        foreach (var instruction in method.Body.Instructions)
+        {
+            switch (instruction.Operand)
+            {
+                case MethodReference methodRef when methodRef.IsWeaverAssemblyReferenced(module):
+                case TypeReference typeRef when typeRef.IsWeaverAssemblyReferenced(module):
+                case FieldReference fieldRef when fieldRef.IsWeaverAssemblyReferenced(module):
+                case CallSite callSite when callSite.IsWeaverAssemblyReferenced(module):
+                    return true;
+            }
         }
 
-        public void Process()
+        return false;
+    }
+
+    public bool Process()
+    {
+        if (HasLibReference(_module, _method) == false)
+            return false;
+
+        try
         {
+            return ProcessImpl();
+        }
+        catch (InstructionWeavingException ex)
+        {
+            throw new WeavingException(_log.QualifyMessage(ex.Message, ex.Instruction))
+            {
+                SequencePoint = ex.Instruction.GetInputSequencePoint(_method)
+            };
+        }
+        catch (WeavingException ex)
+        {
+            throw new WeavingException(_log.QualifyMessage(ex.Message))
+            {
+                SequencePoint = ex.SequencePoint
+            };
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Unexpected error occured while processing method {_method.FullName}: {ex.Message}", ex);
+        }
+    }
+
+    private static bool IsAnchorMethodCall(Instruction instruction)
+    {
+        return instruction.OpCode == OpCodes.Call
+               && instruction.Operand is MethodReference
+               {
+                   Name: WeaverAnchors.MethodName,
+                   DeclaringType.Scope.Name: WeaverAnchors.AssemblyName
+               };
+    }
+
+    private bool ProcessImpl()
+    {
+        var instruction = Instructions.FirstOrDefault();
+        Instruction? nextInstruction;
+        var emitted = false;
+
+        for (; instruction != null; instruction = nextInstruction)
+        {
+            nextInstruction = instruction.Next;
+
+            if (IsAnchorMethodCall(instruction) == false)
+                continue;
+
             try
             {
-                ProcessImpl();
+                nextInstruction = ProcessAnchorMethod(instruction);
+                emitted = true;
             }
-            catch (InstructionWeavingException ex)
+            catch (InstructionWeavingException)
             {
-                throw new WeavingException(_log.QualifyMessage(ex.Message, ex.Instruction))
-                {
-                    SequencePoint = ex.Instruction.GetInputSequencePoint(_method)
-                };
+                throw;
             }
             catch (WeavingException ex)
             {
-                throw new WeavingException(_log.QualifyMessage(ex.Message))
-                {
-                    SequencePoint = ex.SequencePoint
-                };
+                throw new InstructionWeavingException(instruction, _log.QualifyMessage(ex.Message, instruction));
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException($"Unexpected error occured while processing method {_method.FullName}: {ex.Message}", ex);
+                throw new InstructionWeavingException(instruction, $"Unexpected error occured while processing method {_method.FullName} at instruction {instruction}: {ex}");
             }
         }
+        return emitted;
+    }
 
-        private static bool IsAnchorMethodCall(Instruction instruction)
+    private Instruction? ProcessAnchorMethod(Instruction instruction)
+    {
+        var next = instruction.Next;
+        if (next == null)
+            throw NoILAccessorMethodInvocationException();
+
+        // var x = obj.ILAccess<T>();
+        if (IsStloc(next))
+            throw NoILAccessorMethodInvocationException();
+
+        // obj.ILAccess<T>().SomeMethod();
+        if (IsCallAndPop(next) && IsILAccessorMethod(next) == false)
         {
-            if (instruction.OpCode != OpCodes.Call
-                || instruction.Operand is not GenericInstanceMethod method)
-                return false;
-
-            return method.DeclaringType.FullName == AnchorMethodDeclaringTypeName
-                   && method.Name == AnchorMethodName;
+            if (IsAnchorMethodCall(next))
+                throw new InvalidOperationException($"The method {WeaverAnchors.MethodCall} cannot be invoked followed by another {WeaverAnchors.MethodCall}");
+            else
+                throw NoILAccessorMethodInvocationException();
         }
 
-        private void ProcessImpl()
+        for (var p = next; p != null; p = p.Next)
         {
-            var instruction = Instructions.FirstOrDefault();
-            Instruction? nextInstruction;
+            if (IsILAccessorMethod(p) == false)
+                continue;
 
-            for (; instruction != null; instruction = nextInstruction)
-            {
-                nextInstruction = instruction.Next;
-
-                if (!IsAnchorMethodCall(instruction))
-                    continue;
-
-                try
-                {
-                    nextInstruction = ProcessAnchorMethod(instruction);
-                }
-                catch (InstructionWeavingException)
-                {
-                    throw;
-                }
-                catch (WeavingException ex)
-                {
-                    throw new InstructionWeavingException(instruction, _log.QualifyMessage(ex.Message, instruction));
-                }
-                catch (Exception ex)
-                {
-                    throw new InstructionWeavingException(instruction, $"Unexpected error occured while processing method {_method.FullName} at instruction {instruction}: {ex}");
-                }
-            }
+            p = EmitILAccessInstructions(instruction, p);
+            return p.Next;
         }
 
-        private Instruction? ProcessAnchorMethod(Instruction instruction)
+        throw NoILAccessorMethodInvocationException();
+    }
+
+    private Instruction EmitPropertyInstructions(Instruction anchor, PropertyDefinition property, bool isGet)
+    {
+        if (isGet)
         {
-            var anchorMethod = (GenericInstanceMethod)instruction.Operand;
-            var interfaceTypeRef = anchorMethod.GenericArguments.First();
-            var interfaceTypeDef = interfaceTypeRef.Resolve();
-            if (!interfaceTypeDef.IsInterface)
-                throw new InstructionWeavingException(instruction, "The method Base<T> requires that T is an interface type, but got " + interfaceTypeDef.FullName);
-
-            var next = instruction.Next;
-            if (next == null)
-                throw NoInterfaceMethodInvocationException();
-
-            if (IsStloc(next))
-                throw NoInterfaceMethodInvocationException();
-
-            if (IsCallAndPop(next) && !IsInterfaceMethodCandidate(next, interfaceTypeRef, interfaceTypeDef))
+            var method = property.BuildGetter().Resolve();
+            if (method.IsStatic)
             {
-                if (IsAnchorMethodCall(next))
-                    throw new InvalidOperationException("The method Base<T> cannot be invoked followed by another Base<T>");
-                else
-                    throw NoInterfaceMethodInvocationException();
+                // call         void ILAccess.Example.TestModel::set_PublicStaticProperty(int32)
+                _il.Remove(anchor.Previous);
+                return Instruction.Create(OpCodes.Call, method);
             }
-
-            for (var p = next; p != null; p = p.Next)
+            else
             {
-                if (!IsInterfaceMethodCandidate(p, interfaceTypeRef, interfaceTypeDef))
-                    continue;
-
-                if (_method.FullName.Contains("OverridedGenericMethodTestCases::GenericMethod_Invoke"))
-                {
-
-                }
-
-                var graph = Instructions.BuildGraph();
-                var args = p.GetArgumentPushInstructions(Instructions, graph);
-                var arg = args.First();
-
-                if (arg != instruction)
-                    continue;
-
-                p = EmitBaseInvokeInstructions(instruction, interfaceTypeRef, interfaceTypeDef, p);
-                return p.Next;
+                // ldloc.0      // obj
+                // callvirt instance void ILAccess.Example.TestModel::set_PublicProperty(int32)
+                return Instruction.Create(OpCodes.Callvirt, method);
             }
+        }
+        else
+        {
+            var method = property.BuildSetter().Resolve();
+            if (method.IsStatic)
+            {
+                // call         void ILAccess.Example.TestModel::set_PublicStaticProperty(int32)
+                _il.Remove(anchor.Previous);
+                return Instruction.Create(OpCodes.Call, method);
+            }
+            else
+            {
+                // ldloc.0      // obj
+                // callvirt instance void ILAccess.Example.TestModel::set_PublicProperty(int32)
+                return Instruction.Create(OpCodes.Callvirt, method);
+            }
+        }
+    }
 
-            throw NoInterfaceMethodInvocationException();
+    private Instruction EmitFieldInstructions(Instruction anchor, FieldDefinition field, bool isGet)
+    {
+        if (field.IsStatic)
+        {
+            _il.Remove(anchor.Previous);
         }
 
-        private Instruction EmitBaseInvokeInstructions(Instruction anchor, TypeReference typeRef, TypeDefinition interfaceTypeDef, Instruction invokeInstruction)
+        var code = (field.IsStatic, isGet) switch
         {
-            _il.Remove(anchor);
+            (true, true) => OpCodes.Ldsfld,
+            (true, false) => OpCodes.Stsfld,
+            (false, true) => OpCodes.Ldfld,
+            (false, false) => OpCodes.Stfld,
+        };
+        return Instruction.Create(code, field);
+    }
 
-            var methodRef = (MethodReference)invokeInstruction.Operand;
+    private Instruction EmitILAccessInstructions(Instruction anchor, Instruction invokeInstruction)
+    {
+        var next = anchor.Next;
+        if (next.OpCode != OpCodes.Ldstr)
+            throw new InvalidOperationException("The name of property/field to be invoked should be a constant.");
 
-            if (typeRef.IsEqualTo(methodRef.DeclaringType))
-            {
-                var methodDef = methodRef.Resolve();
-                EnsureNonAbstract(methodDef);
+        var typeRef = ((GenericInstanceMethod)anchor.Operand).GenericArguments[0];
+        var name = (string)next.Operand;
+        var method = (MethodReference)invokeInstruction.Operand;
+        var typeDef = typeRef.ResolveRequiredType();
+        var properties = typeDef.Properties.Where(p => p.Name == name).ToArray();
+        var fields = typeDef.Fields.Where(p => p.Name == name).ToArray();
+        var isGet = method.Name == GetValue;
 
-                invokeInstruction.OpCode = OpCodes.Call;
-                return invokeInstruction;
-            }
-
-            var interfaceDefaultMethod = interfaceTypeDef.GetInterfaceDefaultMethod(methodRef);
-            EnsureNonAbstract(interfaceDefaultMethod);
-
-            var interfaceDefaultMethodRef = (MethodReference)interfaceDefaultMethod;
-            if (methodRef is GenericInstanceMethod { HasGenericArguments: true } genericInstanceMethod)
-            {
-                interfaceDefaultMethodRef = interfaceDefaultMethod.MakeGenericMethod(genericInstanceMethod.GenericArguments);
-            }
-            
-            // we have to use Calli instead of Call to avoid MethodAccessException
-            // we cannot use Ldftn to get the method pointer because of MethodAccessException
-            var handle = _il.Locals.AddLocalVar(new LocalVarBuilder(Types.RuntimeMethodHandle));
-            var ptr = _il.Locals.AddLocalVar(new LocalVarBuilder(Types.IntPtr));
-            var callSite = new StandAloneMethodSigBuilder(CallingConventions.HasThis, interfaceDefaultMethodRef).Build();
-
-            var to64 = _il.Create(OpCodes.Call, Methods.ToInt64);
-            var to32 = _il.Create(OpCodes.Call, Methods.ToInt32);
-            var calli = _il.Create(OpCodes.Calli, callSite);
-
-            var instructions = new List<Instruction>(4)
-            {
-                _il.Create(OpCodes.Ldtoken, interfaceDefaultMethodRef),
-                _il.Create(OpCodes.Stloc, handle),
-                _il.Create(OpCodes.Ldloca, handle),
-                _il.Create(OpCodes.Call, Methods.GetFunctionPointer),
-                _il.Create(OpCodes.Stloc, ptr),
-                _il.Create(OpCodes.Ldloca, ptr),
-                _il.Create(OpCodes.Call, Methods.Is64BitProcess),
-                _il.Create(OpCodes.Brfalse, to32),
-                to64,
-                _il.Create(OpCodes.Br, calli),
-                to32,
-                calli,
-                Instruction.Create(OpCodes.Nop)
-            };
-
-            var cur = _il.InsertAfter(invokeInstruction, instructions);
-            _il.Remove(invokeInstruction);
-            return cur;
-        }
-
-        private static bool IsInterfaceMethodCandidate(Instruction instruction, TypeReference typeRef, TypeDefinition typeDef)
+        var newInstruction = (properties.Length, fields.Length) switch
         {
-            if (instruction.OpCode != OpCodes.Callvirt
-                || instruction.Operand is not MethodReference methodRef)
-                return false;
+            (0, 0) => throw new InvalidOperationException($"Property or field '{name}' not found in type {typeDef.FullName}"),
+            (1, 0) => EmitPropertyInstructions(anchor, properties[0], isGet),
+            (0, 1) => EmitFieldInstructions(anchor, fields[0], isGet),
+            _ => throw new InvalidOperationException($"Ambiguous property or field '{name}' in type {typeDef.FullName}"),
+        };
 
-            var baseTypeRef = methodRef.DeclaringType;
-            if (typeRef.IsEqualTo(baseTypeRef))
+        _il.Remove(anchor);
+        _il.Remove(next);
+        var cur = _il.InsertAfter(invokeInstruction, newInstruction);
+        _il.Remove(invokeInstruction);
+        return cur;
+    }
+
+    private static bool IsILAccessorMethod(Instruction instruction)
+    {
+        return instruction.OpCode == OpCodes.Callvirt
+               && instruction.Operand is MethodReference
+               {
+                   DeclaringType:
+                   {
+                       Name: WeaverAnchors.TypeGenericName,
+                       Scope.Name: WeaverAnchors.AssemblyName
+                   }
+               };
+    }
+
+    private static bool IsCallAndPop(Instruction instruction)
+    {
+        return instruction.OpCode.FlowControl == FlowControl.Call && instruction.GetPopCount() > 0;
+    }
+
+    private static bool IsStloc(Instruction instruction)
+    {
+        switch (instruction.OpCode.Code)
+        {
+            case Code.Stloc:
+            case Code.Stloc_S:
+            case Code.Stloc_0:
+            case Code.Stloc_1:
+            case Code.Stloc_2:
+            case Code.Stloc_3:
                 return true;
-
-            return typeDef.Interfaces.Any(m => m.InterfaceType.IsEqualTo(baseTypeRef));
+            default:
+                return false;
         }
+    }
 
-        private static bool IsCallAndPop(Instruction instruction)
-        {
-            return instruction.OpCode.FlowControl == FlowControl.Call && instruction.GetPopCount() > 0;
-        }
-
-        private static bool IsStloc(Instruction instruction)
-        {
-            switch (instruction.OpCode.Code)
-            {
-                case Code.Stloc:
-                case Code.Stloc_S:
-                case Code.Stloc_0:
-                case Code.Stloc_1:
-                case Code.Stloc_2:
-                case Code.Stloc_3:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        private static Exception NoInterfaceMethodInvocationException()
-        {
-            return new InvalidOperationException("The method Base<T> requires that an interface methods to be base-invoked with its return value fluently");
-        }
-
-        private static void EnsureNonAbstract(MethodDefinition method)
-        {
-            if (method.IsAbstract)
-                throw new InvalidOperationException($"The abstract interface method {method.FullName} cannot be invoked");
-        }
+    private static Exception NoILAccessorMethodInvocationException()
+    {
+        return new InvalidOperationException($"The method {WeaverAnchors.MethodCall} requires one method declared in {WeaverAnchors.TypeName}<T> to be invoked fluently");
     }
 }

@@ -1,48 +1,67 @@
-﻿using Fody;
-using ILAccess.Fody.Processing;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ILAccess.Fody.Support;
-using Mono.Cecil.Cil;
+﻿namespace ILAccess.Fody;
 
-namespace ILAccess.Fody
+public class ModuleWeaver : BaseModuleWeaver
 {
-    public class ModuleWeaver : BaseModuleWeaver
+    private readonly Logger _log;
+
+    public ModuleWeaver()
     {
-        private readonly Logger _log;
+        _log = new Logger(this);
+    }
 
-        public ModuleWeaver()
+    public override void Execute()
+    {
+        var emitted = false;
+        foreach (var type in ModuleDefinition.GetTypes())
         {
-            _log = new Logger(this);
-        }
-
-        public override void Execute()
-        {
-            foreach (var type in ModuleDefinition.GetTypes())
+            foreach (var method in type.Methods)
             {
-                foreach (var method in type.Methods)
-                {
-                    try
-                    {
-                        if (!MethodWeaver.NeedsProcessing(ModuleDefinition, method))
-                            continue;
+                _log.Debug($"Processing: {method.FullName}");
 
-                        _log.Debug($"Processing: {method.FullName}");
-                        new MethodWeaver(ModuleDefinition, method, _log).Process();
-                    }
-                    catch (WeavingException ex)
-                    {
-                        AddError(ex.Message, ex.SequencePoint);
-                    }
+                try
+                {
+                    emitted = new MethodWeaver(ModuleDefinition, method, _log).Process() || emitted;
+                }
+                catch (WeavingException ex)
+                {
+                    AddError(ex.Message, ex.SequencePoint);
                 }
             }
         }
 
-        public override IEnumerable<string> GetAssembliesForScanning() => Enumerable.Empty<string>();
-
-        protected virtual void AddError(string message, SequencePoint? sequencePoint)
-            => _log.Error(message, sequencePoint);
+        if (emitted)
+        {
+            var stringType = ModuleDefinition.ImportType<string>();
+            var attr = GetOrAddIgnoresAccessChecksToAttribute();
+            var ctor = attr.GetConstructor(stringType);
+            var attribute = new CustomAttribute(ctor);
+            var arg = new CustomAttributeArgument(stringType, ModuleDefinition.Assembly.Name.Name);
+            attribute.ConstructorArguments.Add(arg);
+            ModuleDefinition.Assembly.CustomAttributes.Add(attribute);
+        }
     }
+
+    private TypeDefinition GetOrAddIgnoresAccessChecksToAttribute()
+    {
+        const string ns = "System.Runtime.CompilerServices";
+        const string name = "IgnoresAccessChecksToAttribute";
+        var attr = ModuleDefinition.GetType(ns, name);
+        if (attr != null)
+            return attr;
+
+        var type = ModuleDefinition.AddType(ns, name, TypeAttributes.Class | TypeAttributes.NotPublic, typeof(Attribute));
+        var property = type.AddAutoProperty<string>("AssemblyName", setterAttributes: MethodAttributes.Private);
+        var ctor = type.AddConstructor(instructions: new[]
+        {
+            Instruction.Create(OpCodes.Ldarg_1),
+            Instruction.Create(OpCodes.Callvirt, property.GetMethod),
+        });
+        ctor.AddParameter<string>("assemblyName");
+        return type;
+    }
+
+    public override IEnumerable<string> GetAssembliesForScanning() => Enumerable.Empty<string>();
+
+    protected virtual void AddError(string message, SequencePoint? sequencePoint)
+        => _log.Error(message, sequencePoint);
 }

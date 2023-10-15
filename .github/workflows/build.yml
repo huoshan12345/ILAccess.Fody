@@ -12,11 +12,11 @@ env:
   DOTNET_NOLOGO: 1
   VERSION: 0.0.1
   NUGET_APIKEY: ${{ secrets.NUGET_APIKEY }}
-  SOLUTION: InterfaceBaseInvoke.sln
+  SOLUTION: ILAccess.Fody.sln
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-2019
     steps:
       - name: Checkout
         uses: actions/checkout@v2
