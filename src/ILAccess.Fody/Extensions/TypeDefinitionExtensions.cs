@@ -75,7 +75,7 @@ public static class TypeDefinitionExtensions
         var ctors = type.GetConstructors();
         var ctor = ctors
             .Where(m => m.Parameters.Count == parameters.Length)
-            .FirstOrDefault(m => m.Parameters.Select(x => x.ParameterType).SequenceEqual(parameters, TypeReferenceEqualityComparer.Instance));
+            .FirstOrDefault(m => m.Parameters.Select(x => x.ParameterType).SequenceEqual(parameters, TypeReferenceEqualityComparer.IgnoreRuntimeDiffInstance));
         return ctor ?? throw new ArgumentException($"There's no constructor({parameters.Select(m => m.SimpleName()).JoinWith(", ")}) in type {type.FullName}");
     }
 

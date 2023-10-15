@@ -2,20 +2,16 @@
 
 internal class TypeReferenceEqualityComparer : IEqualityComparer<TypeReference>
 {
-    //private static readonly Type _typeReferenceEqualityComparer = typeof(TypeReference).Assembly.GetRequiredType("Mono.Cecil.TypeReferenceEqualityComparer");
-    //public static readonly IEqualityComparer<TypeReference> Instance = _typeReferenceEqualityComparer.New<IEqualityComparer<TypeReference>>();
+    private static readonly string[] RuntimeNames = { "mscorlib", "System.Runtime", "System.Private.CoreLib", "netstandard" };
+    public static IEqualityComparer<TypeReference> Instance { get; } = new TypeReferenceEqualityComparer(false);
+    public static IEqualityComparer<TypeReference> IgnoreRuntimeDiffInstance { get; } = new TypeReferenceEqualityComparer(true);
 
-    //public bool Equals(TypeReference x, TypeReference y)
-    //{
-    //   return Instance.Equals(x, y);
-    //}
+    private readonly bool _ignoreRuntimeDiff;
 
-    //public int GetHashCode(TypeReference obj)
-    //{
-    //    return Instance.GetHashCode(obj);
-    //}
-
-    public static IEqualityComparer<TypeReference> Instance { get; } = new TypeReferenceEqualityComparer();
+    public TypeReferenceEqualityComparer(bool ignoreRuntimeDiff)
+    {
+        _ignoreRuntimeDiff = ignoreRuntimeDiff;
+    }
 
     public bool Equals(TypeReference? x, TypeReference? y)
     {
@@ -37,13 +33,15 @@ internal class TypeReferenceEqualityComparer : IEqualityComparer<TypeReference>
         }
     }
 
-    private static string? GetAssemblyName(IMetadataScope? scope)
+    private string? GetAssemblyName(IMetadataScope? scope)
     {
-        return scope switch
-        {
-            null => null,
-            ModuleDefinition md => md.Assembly.FullName,
-            _ => scope.ToString(),
-        };
+        if (scope == null)
+            return null;
+
+        var name = scope.Name;
+
+        return RuntimeNames.Contains(name) && _ignoreRuntimeDiff
+            ? "System.Runtime"
+            : name;
     }
 }
