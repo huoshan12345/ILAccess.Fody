@@ -1,6 +1,4 @@
 ﻿using System.Reflection;
-using Fody;
-using ILAccess.Tests.AssemblyToProcess;
 using ILAccess.Tests.InvalidAssemblyToProcess;
 
 namespace ILAccess.Tests.Weaving;

@@ -1,6 +1,4 @@
-using Fody;
 using ILAccess.Tests.StandardAssemblyToProcess;
-using Mono.Cecil;
 using ModuleDefinition = Mono.Cecil.ModuleDefinition;
 
 namespace ILAccess.Tests.Support;

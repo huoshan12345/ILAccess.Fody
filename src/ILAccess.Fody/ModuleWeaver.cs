@@ -31,33 +31,8 @@ public class ModuleWeaver : BaseModuleWeaver
 
         if (emitted)
         {
-            var stringType = ModuleDefinition.ImportType<string>();
-            var attr = GetOrAddIgnoresAccessChecksToAttribute();
-            var ctor = attr.GetConstructor(stringType);
-            var attribute = new CustomAttribute(ctor);
-            var arg = new CustomAttributeArgument(stringType, ModuleDefinition.Assembly.Name.Name);
-            attribute.ConstructorArguments.Add(arg);
-            ModuleDefinition.Assembly.CustomAttributes.Add(attribute);
+            ModuleDefinition.AddIgnoresAccessCheck();
         }
-    }
-
-    private TypeDefinition GetOrAddIgnoresAccessChecksToAttribute()
-    {
-        const string ns = "System.Runtime.CompilerServices";
-        const string name = "IgnoresAccessChecksToAttribute";
-        var attr = ModuleDefinition.GetType(ns, name);
-        if (attr != null)
-            return attr;
-
-        var type = ModuleDefinition.AddType(ns, name, TypeAttributes.Class | TypeAttributes.NotPublic, typeof(Attribute));
-        var property = type.AddAutoProperty<string>("AssemblyName", setterAttributes: MethodAttributes.Private);
-        var ctor = type.AddConstructor(instructions: new[]
-        {
-            Instruction.Create(OpCodes.Ldarg_1),
-            Instruction.Create(OpCodes.Callvirt, property.GetMethod),
-        });
-        ctor.AddParameter<string>("assemblyName");
-        return type;
     }
 
     public override IEnumerable<string> GetAssembliesForScanning() => Enumerable.Empty<string>();

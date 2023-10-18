@@ -9,7 +9,7 @@ internal sealed class MethodWeaver
     private readonly MethodDefinition _method;
     private readonly MethodWeaverLogger _log;
     private readonly WeaverILProcessor _il;
-    private Collection<Instruction> Instructions => _method.Body.Instructions;
+    private IEnumerable<Instruction> Instructions => _method.Body.Instructions;
 
     public MethodWeaver(ModuleDefinition module, MethodDefinition method, ILogger log)
     {
@@ -226,9 +226,8 @@ internal sealed class MethodWeaver
 
         _il.Remove(anchor);
         _il.Remove(next);
-        var cur = _il.InsertAfter(invokeInstruction, newInstruction);
-        _il.Remove(invokeInstruction);
-        return cur;
+        _il.Replace(invokeInstruction, newInstruction);
+        return newInstruction;
     }
 
     private static bool IsILAccessorMethod(Instruction instruction)

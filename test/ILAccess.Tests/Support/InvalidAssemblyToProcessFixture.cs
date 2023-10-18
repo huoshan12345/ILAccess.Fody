@@ -1,8 +1,6 @@
 ﻿using System.Linq;
 using System.Reflection;
-using Fody;
 using ILAccess.Tests.InvalidAssemblyToProcess;
-using Mono.Cecil;
 using ModuleDefinition = Mono.Cecil.ModuleDefinition;
 
 namespace ILAccess.Tests.Support;

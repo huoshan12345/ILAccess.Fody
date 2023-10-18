@@ -1,14 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text;
-using Fody;
-using ILAccess.Fody.Extensions;
-using ILAccess.Fody.Processing;
-using ILAccess.Tests.AssemblyToProcess;
-using Mono.Cecil;
-using ModuleDefinition = Mono.Cecil.ModuleDefinition;
-using SequencePoint = Mono.Cecil.Cil.SequencePoint;
-
-#pragma warning disable 618
+﻿#pragma warning disable 618
 
 namespace ILAccess.Tests.Support;
 

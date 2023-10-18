@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace ILAccess.Tests.Support;
+﻿namespace ILAccess.Tests.Support;
 
 internal static class AssertionExtensions
 {
