@@ -1,5 +1,4 @@
 ﻿using static ILAccess.Fody.Processing.WeaverAnchors.MethodNames;
-using CallSite = Mono.Cecil.CallSite;
 
 namespace ILAccess.Fody.Processing;
 
@@ -11,7 +10,7 @@ internal sealed class MethodWeaver
     private readonly WeaverILProcessor _il;
     private IEnumerable<Instruction> Instructions => _method.Body.Instructions;
 
-    public MethodWeaver(ModuleDefinition module, MethodDefinition method, ILogger log)
+    public MethodWeaver(ModuleDefinition module, MethodDefinition method, IWeaverLogger log)
     {
         _module = module;
         _method = method;
@@ -19,37 +18,8 @@ internal sealed class MethodWeaver
         _log = new MethodWeaverLogger(log, _method);
     }
 
-    private static bool HasLibReference(ModuleDefinition module, MethodDefinition method)
-    {
-        if (method.IsWeaverAssemblyReferenced(module))
-            return true;
-
-        if (!method.HasBody)
-            return false;
-
-        if (method.Body.HasVariables && method.Body.Variables.Any(i => i.VariableType.IsWeaverAssemblyReferenced(module)))
-            return true;
-
-        foreach (var instruction in method.Body.Instructions)
-        {
-            switch (instruction.Operand)
-            {
-                case MethodReference methodRef when methodRef.IsWeaverAssemblyReferenced(module):
-                case TypeReference typeRef when typeRef.IsWeaverAssemblyReferenced(module):
-                case FieldReference fieldRef when fieldRef.IsWeaverAssemblyReferenced(module):
-                case CallSite callSite when callSite.IsWeaverAssemblyReferenced(module):
-                    return true;
-            }
-        }
-
-        return false;
-    }
-
     public bool Process()
     {
-        if (HasLibReference(_module, _method) == false)
-            return false;
-
         try
         {
             return ProcessImpl();

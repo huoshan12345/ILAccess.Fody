@@ -2,11 +2,11 @@
 
 public class ModuleWeaver : BaseModuleWeaver
 {
-    private readonly Logger _log;
+    private readonly IWeaverLogger _log;
 
     public ModuleWeaver()
     {
-        _log = new Logger(this);
+        _log = new WeaverLogger(this);
     }
 
     public override void Execute()
@@ -16,6 +16,9 @@ public class ModuleWeaver : BaseModuleWeaver
         {
             foreach (var method in type.Methods)
             {
+                if (ModuleDefinition.IsAssemblyReferenced(method, WeaverAnchors.AssemblyName) == false)
+                    continue;
+
                 _log.Debug($"Processing: {method.FullName}");
 
                 try
