@@ -1,17 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <Nullable>enable</Nullable>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
-    <Authors>huoshan12345</Authors>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <DebugType>embedded</DebugType>
     <PackageId>ILAccess.Fody</PackageId>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Copyright>Copyright $([System.DateTime]::UtcNow.ToString(yyyy)).</Copyright>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeAllInPackage</TargetsForTfmSpecificContentInPackage>
   </PropertyGroup>
 
