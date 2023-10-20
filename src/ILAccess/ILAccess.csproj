@@ -7,7 +7,6 @@
     <IsPackable>true</IsPackable>
     <DebugType>embedded</DebugType>
     <PackageId>ILAccess.Fody</PackageId>
-    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeAllInPackage</TargetsForTfmSpecificContentInPackage>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,10 +19,6 @@
     <ProjectReference Include="..\ILAccess.Fody\ILAccess.Fody.csproj" PrivateAssets="All" />
   </ItemGroup>
 
-  <Target Name="IncludeAllInPackage">
-    <ItemGroup>
-      <TfmSpecificPackageFile Include="$(OutputPath)\MoreFodyHelpers.dll" PackagePath="weaver" />
-    </ItemGroup>
-  </Target>
+  <Import Project="..\MoreFodyHelpers.props" />
 
 </Project>
