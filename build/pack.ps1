@@ -43,5 +43,10 @@ if ($isGithubAction) {
 
   Write-Output "Uploading finished."
 }
+else {
+  $packageName = Split-Path $path -Leaf
+  $packageLocalDir = [io.path]::combine( $env:USERPROFILE, ".nuget", "packages", $packageName.ToLower(), $ver);
+  Remove-Item $packageLocalDir -Recurse -Force -ErrorAction SilentlyContinue
+}
 
 
