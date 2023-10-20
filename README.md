@@ -4,7 +4,7 @@
 [![NuGet package](https://img.shields.io/nuget/v/ILAccess.Fody.svg?logo=NuGet)](https://www.nuget.org/packages/ILAccess.Fody)
 [![.net](https://img.shields.io/badge/.net%20standard-2.0-ff69b4.svg?)](https://www.microsoft.com/net/download)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/huoshan12345/ILAccess.Fody/blob/master/LICENSE)  
-![Icon](https://github.com/huoshan12345/ILAccess.Fody/raw/master/icon.png)
+![Icon](https://raw.githubusercontent.com/huoshan12345/ILAccess.Fody/master/icon.png)
 
 This is an add-in for [Fody](https://github.com/Fody/Fody) 
 ---
