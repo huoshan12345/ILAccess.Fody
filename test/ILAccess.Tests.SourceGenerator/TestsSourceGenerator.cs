@@ -14,7 +14,7 @@ public class TestsSourceGenerator : ISourceGenerator
     {
         "ILAccess",
         "Tests",
-        "AssemblyToProcess"
+        "AssemblyToProcess",
     };
 
     public static readonly string AssemblyName = string.Join(".", Namespaces);
@@ -49,16 +49,12 @@ public class TestsSourceGenerator : ISourceGenerator
         if (assemblySymbol == null)
             throw new InvalidOperationException("Cannot find assembly symbol: " + AssemblyName);
 
-        var cur = Namespaces.Aggregate(assemblySymbol.GlobalNamespace, (current, ns) => current.GetNamespaceMembers().First(m => m.Name == ns));
+        var cur = Namespaces.Append("TestCases").Aggregate(assemblySymbol.GlobalNamespace, (current, ns) => current.GetNamespaceMembers().First(m => m.Name == ns));
         var types = cur.GetTypeMembers();
 
         foreach (var type in types)
         {
-            var idx = type.Name.IndexOf("TestCases", StringComparison.Ordinal);
-            if (idx < 0)
-                continue;
-
-            var className = type.Name.Substring(0, idx) + "Tests";
+            var className = type.Name + "Tests";
             var (name, code) = TestsSource.Generate(type, className);
             context.AddSource(name, code);
         }
@@ -66,12 +62,12 @@ public class TestsSourceGenerator : ISourceGenerator
 
     public void Initialize(GeneratorInitializationContext context)
     {
-        //#if DEBUG
-        //            if (!Debugger.IsAttached)
-        //            {
-        //                Debugger.Launch();
-        //            }
-        //            Debug.WriteLine("Initalize code generator");
-        //#endif
+#if false && DEBUG
+        if (!Debugger.IsAttached)
+        {
+            Debugger.Launch();
+        }
+        Debug.WriteLine("Initalize code generator");
+#endif
     }
 }

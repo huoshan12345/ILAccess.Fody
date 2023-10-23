@@ -1,6 +1,6 @@
-﻿namespace ILAccess.Tests.AssemblyToProcess;
+﻿namespace ILAccess.Tests.AssemblyToProcess.TestCases;
 
-public partial class ILAccessorTestCases
+public partial class ILAccessorT
 {
     [Fact]
     public void GetValue_PublicStaticProperty()

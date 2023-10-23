@@ -1,11 +1,11 @@
-﻿namespace ILAccess.Tests.AssemblyToProcess;
+﻿namespace ILAccess.Tests.AssemblyToProcess.TestCases;
 
-public partial class ILAccessorTestCases
+public partial class ILAccessor
 {
     [Fact]
     public void GetValue_PublicStaticField()
     {
-        var obj = new TestModel();
+        object obj = new TestModel();
         var value = obj.ILAccess().GetValue<int>("PublicStaticField");
         Assert.Equal(1, value);
     }
@@ -13,7 +13,7 @@ public partial class ILAccessorTestCases
     [Fact]
     public void GetValue_PrivateStaticField()
     {
-        var obj = new TestModel();
+        object obj = new TestModel();
         var value = obj.ILAccess().GetValue<int>("PrivateStaticField");
         Assert.Equal(1, value);
     }
@@ -21,7 +21,7 @@ public partial class ILAccessorTestCases
     [Fact]
     public void GetValue_PublicField()
     {
-        var obj = new TestModel();
+        object obj = new TestModel();
         var value = obj.ILAccess().GetValue<int>("PublicField");
         Assert.Equal(1, value);
     }
@@ -29,7 +29,7 @@ public partial class ILAccessorTestCases
     [Fact]
     public void GetValue_PrivateField()
     {
-        var obj = new TestModel();
+        object obj = new TestModel();
         var value = obj.ILAccess().GetValue<int>("PrivateField");
         Assert.Equal(1, value);
     }

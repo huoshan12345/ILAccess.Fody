@@ -207,7 +207,7 @@ internal sealed class MethodWeaver
                {
                    DeclaringType:
                    {
-                       Name: WeaverAnchors.TypeGenericName,
+                       Name: WeaverAnchors.TypeName,
                        Scope.Name: WeaverAnchors.AssemblyName
                    }
                };

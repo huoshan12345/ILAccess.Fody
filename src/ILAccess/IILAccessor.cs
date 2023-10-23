@@ -3,8 +3,7 @@
 /// <summary>
 /// 
 /// </summary>
-/// <typeparam name="T"></typeparam>
-public interface IILAccessor<T>
+public interface IILAccessor
 {
     /// <summary>
     /// Gets a value of a property or field.
