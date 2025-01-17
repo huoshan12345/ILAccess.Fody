@@ -1,0 +1,58 @@
+name: send-event
+on:
+  push:
+    branches:
+      - master
+  pull_request_target:
+    types:
+      - assigned
+      - unassigned
+      - labeled
+      - unlabeled
+      - opened
+      - edited
+      - closed
+      - reopened
+      - synchronize
+      - converted_to_draft
+      - ready_for_review
+      - locked
+      - unlocked
+      - review_requested
+      - review_request_removed
+      - auto_merge_enabled
+      - auto_merge_disabled
+  pull_request_review:
+    types:
+      - submitted
+      - edited
+      - dismissed
+  pull_request_review_comment:
+    types:
+      - created
+      - edited
+      - deleted
+  issue_comment:
+    # NOTE: it includes pull request comment events.
+    # Note: This event will only trigger a workflow run if the workflow file is on the default branch.
+    types:
+      - created
+      - edited
+      - deleted
+  release:
+    types:
+      - published
+
+jobs:
+  send_event:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Event
+        uses: fjogeleit/http-request-action@v1
+        with:
+          escapeData: true
+          retry: 3
+          url: https://github.huoshan.space/api/github/event
+          method: POST
+          customHeaders: '{ "token": "${{ secrets.GITHUB_TOKEN }}", "repository": "${{ github.repository }}" }'
+          data: '{ "github": ${{ toJSON(github) }} }'
