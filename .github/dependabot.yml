@@ -6,19 +6,16 @@
 version: 2
 
 registries:
-  nuget-jfrog:
+  nuget-public:
     type: nuget-feed
-    url: https://seismic.jfrog.io/artifactory/api/nuget/nuget
-    username: ${{ secrets.ORG_JFROG_USERNAME }}
-    password: ${{ secrets.ORG_JFROG_ACCESS_TOKEN }}
+    url: https://api.nuget.org/v3/index.json
 
 updates:
-  - package-ecosystem: "nuget" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: nuget
+    directory: /
     schedule:
-      interval: "daily"
-    # Disable rebasing for npm pull requests
-    rebase-strategy: "disabled"
+      interval: daily
+    rebase-strategy: disabled
     open-pull-requests-limit: 50
     registries:
-      - nuget-jfrog
+      - nuget-public
