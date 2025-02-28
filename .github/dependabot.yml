@@ -14,7 +14,7 @@ updates:
   - package-ecosystem: nuget
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
     rebase-strategy: disabled
     open-pull-requests-limit: 50
     registries:
