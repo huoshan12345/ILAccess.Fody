@@ -1,6 +1,7 @@
 ﻿using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using ILAccess.Fody.Processing;
+using MoreFodyHelpers;
 
 namespace ILAccess.Tests;
 
@@ -41,7 +42,7 @@ public class AssemblyTests
 
         foreach (var module in modules)
         {
-            module.AssemblyReferences.ShouldNotContain(m => m.Name == AssemblyNames.CoreLib);
+            module.AssemblyReferences.ShouldNotContain(m => m.Name == AssemblyNames.SystemPrivateCoreLib);
         }
     }
 }

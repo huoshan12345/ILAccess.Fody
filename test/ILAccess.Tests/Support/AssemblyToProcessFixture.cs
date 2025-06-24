@@ -1,4 +1,6 @@
-﻿#pragma warning disable 618
+﻿using MoreFodyHelpers;
+
+#pragma warning disable 618
 
 namespace ILAccess.Tests.Support;
 
@@ -22,10 +24,10 @@ public static class AssemblyToProcessFixture
 
         var testResult = weavingTask.ExecuteTestRun(
             assemblyPath,
-            ignoreCodes: new[]
-            {
-                "0x801312da" // VLDTR_E_MR_VARARGCALLINGCONV
-            },
+            ignoreCodes:
+            [
+                "0x801312da", // VLDTR_E_MR_VARARGCALLINGCONV
+            ],
             writeSymbols: true,
             beforeExecuteCallback: BeforeExecuteCallback,
             runPeVerify: false
@@ -48,7 +50,7 @@ public static class AssemblyToProcessFixture
     internal static void BeforeExecuteCallback(ModuleDefinition module)
     {
         // This reference is added by Fody, it's not supposed to be there
-        module.AssemblyReferences.RemoveWhere(m => m.Name == AssemblyNames.CoreLib);
+        module.AssemblyReferences.RemoveWhere(m => m.Name == AssemblyNames.SystemPrivateCoreLib);
     }
 
     internal class GuardedWeaver : ModuleWeaver

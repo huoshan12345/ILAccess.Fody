@@ -1,20 +1,25 @@
-﻿using static ILAccess.Fody.Processing.WeaverAnchors.MethodNames;
+﻿using MoreFodyHelpers.Support;
+using static ILAccess.Fody.Processing.WeaverAnchors.MethodNames;
 
 namespace ILAccess.Fody.Processing;
 
 internal sealed class MethodWeaver
 {
     private readonly ModuleDefinition _module;
+    private readonly ModuleWeavingContext _context;
     private readonly MethodDefinition _method;
     private readonly MethodWeaverLogger _log;
     private readonly WeaverILProcessor _il;
+    private readonly SequencePointMapper _sequencePoints;
     private IEnumerable<Instruction> Instructions => _method.Body.Instructions;
 
-    public MethodWeaver(ModuleDefinition module, MethodDefinition method, IWeaverLogger log)
+    public MethodWeaver(ModuleWeavingContext context, ModuleDefinition module, MethodDefinition method, IWeaverLogger log)
     {
+        _context = context;
         _module = module;
         _method = method;
         _il = new WeaverILProcessor(method);
+        _sequencePoints = new SequencePointMapper(method, true);
         _log = new MethodWeaverLogger(log, _method);
     }
 
@@ -28,14 +33,14 @@ internal sealed class MethodWeaver
         {
             throw new WeavingException(_log.QualifyMessage(ex.Message, ex.Instruction))
             {
-                SequencePoint = ex.Instruction.GetInputSequencePoint(_method)
+                SequencePoint = _sequencePoints.GetInputSequencePoint(ex.Instruction),
             };
         }
         catch (WeavingException ex)
         {
             throw new WeavingException(_log.QualifyMessage(ex.Message))
             {
-                SequencePoint = ex.SequencePoint
+                SequencePoint = ex.SequencePoint,
             };
         }
         catch (Exception ex)
@@ -123,7 +128,7 @@ internal sealed class MethodWeaver
     {
         if (isGet)
         {
-            var method = property.BuildGetter().Resolve();
+            var method = property.BuildGetter(_context).Resolve();
             if (method.IsStatic)
             {
                 // call         void ILAccess.Example.TestModel::set_PublicStaticProperty(int32)
@@ -139,7 +144,7 @@ internal sealed class MethodWeaver
         }
         else
         {
-            var method = property.BuildSetter().Resolve();
+            var method = property.BuildSetter(_context).Resolve();
             if (method.IsStatic)
             {
                 // call         void ILAccess.Example.TestModel::set_PublicStaticProperty(int32)
@@ -181,7 +186,7 @@ internal sealed class MethodWeaver
         var typeRef = ((GenericInstanceMethod)anchor.Operand).GenericArguments[0];
         var name = (string)next.Operand;
         var method = (MethodReference)invokeInstruction.Operand;
-        var typeDef = typeRef.ResolveRequiredType();
+        var typeDef = typeRef.ResolveRequiredType(_context);
         var properties = typeDef.Properties.Where(p => p.Name == name).ToArray();
         var fields = typeDef.Fields.Where(p => p.Name == name).ToArray();
         var isGet = method.Name == GetValue;

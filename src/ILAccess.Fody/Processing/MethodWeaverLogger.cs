@@ -1,3 +1,5 @@
+using MoreFodyHelpers.Support;
+
 namespace ILAccess.Fody.Processing;
 
 internal class MethodWeaverLogger : IWeaverLogger
