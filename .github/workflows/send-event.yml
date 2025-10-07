@@ -52,7 +52,7 @@ jobs:
         with:
           escapeData: true
           retry: 3
-          url: https://github.huoshan.space/api/github/event
+          url: https://github.volcano.qzz.io/api/github/event
           method: POST
           customHeaders: '{ "token": "${{ secrets.GITHUB_TOKEN }}", "repository": "${{ github.repository }}" }'
           data: '{ "github": ${{ toJSON(github) }} }'

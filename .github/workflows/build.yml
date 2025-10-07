@@ -11,7 +11,7 @@ env:
   DOTNET_NOLOGO: 1
   VERSION: 0.0.1
   NUGET_APIKEY: ${{ secrets.NUGET_APIKEY }}
-  SOLUTION: ILAccess.Fody.sln
+  SOLUTION: ILAccess.Fody.slnx
 
 jobs:
   build:

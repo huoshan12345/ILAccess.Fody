@@ -1,0 +1,30 @@
+<Solution>
+  <Folder Name="/build/">
+    <File Path=".editorconfig" />
+    <File Path=".github/workflows/build.yml" />
+    <File Path="build/incre_ver.ps1" />
+    <File Path="build/pack.ps1" />
+    <File Path="build/pkg.version" />
+    <File Path="build/test_all.ps1" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/example/">
+    <Project Path="src/ILAccess.Example/ILAccess.Example.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <File Path="src/Directory.Build.props" />
+    <File Path="src/MoreFodyHelpers.props" />
+    <Project Path="src/ILAccess.Fody/ILAccess.Fody.csproj" />
+    <Project Path="src/ILAccess/ILAccess.csproj">
+      <BuildDependency Project="src/ILAccess.Fody/ILAccess.Fody.csproj" />
+    </Project>
+  </Folder>
+  <Folder Name="/test/">
+    <File Path="test/Directory.Build.props" />
+    <Project Path="test/ILAccess.Tests.AssemblyToProcess/ILAccess.Tests.AssemblyToProcess.csproj" />
+    <Project Path="test/ILAccess.Tests.InvalidAssemblyToProcess/ILAccess.Tests.InvalidAssemblyToProcess.csproj" />
+    <Project Path="test/ILAccess.Tests.SourceGenerator/ILAccess.Tests.SourceGenerator.csproj" />
+    <Project Path="test/ILAccess.Tests.StandardAssemblyToProcess/ILAccess.Tests.StandardAssemblyToProcess.csproj" />
+    <Project Path="test/ILAccess.Tests/ILAccess.Tests.csproj" />
+  </Folder>
+</Solution>
