@@ -28,7 +28,7 @@ public enum ILAccessorKind
     /// <summary>
     /// Provide access to a static field.
     /// </summary>
-    StaticField
+    StaticField,
 }
 
 /// <summary>
@@ -70,8 +70,12 @@ public enum ILAccessorKind
 /// }
 /// </code>
 /// </remarks>
+/// <remarks>
+/// Instantiates an <see cref="ILAccessAttribute"/> providing access to a member of kind <see cref="ILAccessorKind"/>.
+/// </remarks>
+/// <param name="kind">The kind of the target to which access is provided.</param>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-public sealed class ILAccessAttribute : Attribute
+public sealed class ILAccessAttribute(ILAccessorKind kind) : Attribute
 {
     // Block of text to include above when Generics support is added:
     //
@@ -82,16 +86,9 @@ public sealed class ILAccessAttribute : Attribute
     // <code>extern static</code> method must match generic constraints of the target type, field or method.
 
     /// <summary>
-    /// Instantiates an <see cref="ILAccessAttribute"/> providing access to a member of kind <see cref="ILAccessorKind"/>.
-    /// </summary>
-    /// <param name="kind">The kind of the target to which access is provided.</param>
-    public ILAccessAttribute(ILAccessorKind kind)
-        => Kind = kind;
-
-    /// <summary>
     /// Gets the kind of member to which access is provided.
     /// </summary>
-    public ILAccessorKind Kind { get; }
+    public ILAccessorKind Kind { get; } = kind;
 
     /// <summary>
     /// Gets or sets the name of the member to which access is provided.

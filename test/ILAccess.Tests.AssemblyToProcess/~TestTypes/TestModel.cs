@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 #pragma warning disable CA2211
 #pragma warning disable IDE0051
@@ -15,22 +16,39 @@ namespace ILAccess.Tests.AssemblyToProcess;
 [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Global")]
 public class TestModel
 {
-    private static int PrivateStaticField = 1;
-    public static int PublicStaticField = 1;
-    private int PrivateField = 1;
-    public int PublicField = 1;
+    private static int _start = 1;
 
-    private static readonly int PrivateStaticReadonlyField = 1;
-    public static readonly int PublicStaticReadonlyField = 1;
-    private readonly int PrivateReadonlyField = 1;
-    public readonly int PublicReadonlyField = 1;
+    private static int PrivateStaticField = _start++;
+    public static int PublicStaticField = _start++;
+    private int PrivateField = _start++;
+    public int PublicField = _start++;
 
-    private static int PrivateStaticProperty { get; set; } = 1;
-    public static int PublicStaticProperty { get; set; } = 1;
-    private int PrivateProperty { get; set; } = 1;
-    public int PublicProperty { get; set; } = 1;
+    private static readonly int PrivateStaticReadonlyField = _start++;
+    public static readonly int PublicStaticReadonlyField = _start++;
+    private readonly int PrivateReadonlyField = _start++;
+    public readonly int PublicReadonlyField = _start++;
 
-    public int PublicPropertyWithPrivateSetter { get; private set; } = 1;
-    public int PublicPropertyWithPrivateGetter { private get; set; } = 1;
-    public int PublicPropertyWithoutSetter { get; } = 1;
+    private static int PrivateStaticProperty { get; set; } = _start++;
+    public static int PublicStaticProperty { get; set; } = _start++;
+    private int PrivateProperty { get; set; } = _start++;
+    public int PublicProperty { get; set; } = _start++;
+
+    public int PublicPropertyWithPrivateSetter { get; private set; } = _start++;
+    public int PublicPropertyWithPrivateGetter { private get; set; } = _start++;
+    public int PublicPropertyWithoutSetter { get; } = _start++;
+}
+
+public static class TestModelAccessors
+{
+    [ILAccess(ILAccessorKind.StaticField, Name = "PrivateStaticField")]
+    public static extern ref int PrivateStaticField(this TestModel? c);
+
+    [ILAccess(ILAccessorKind.StaticField, Name = "PublicStaticField")]
+    public static extern ref int PublicStaticField(this TestModel? c);
+
+    [ILAccess(ILAccessorKind.Field, Name = "PrivateField")]
+    public static extern ref int PrivateField(this TestModel c);
+
+    [ILAccess(ILAccessorKind.Field, Name = "PublicField")]
+    public static extern ref int PublicField(this TestModel c);
 }

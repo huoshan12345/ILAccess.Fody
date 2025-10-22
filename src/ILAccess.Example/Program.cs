@@ -14,6 +14,8 @@ using System.Runtime.CompilerServices;
 #pragma warning disable IDE0059 // Unnecessary assignment of a value
 #pragma warning disable CA1822 // Mark members as static
 #pragma warning disable IDE0060 // Remove unused parameter
+#pragma warning disable CS0414 // Field is assigned but its value is never used
+#pragma warning disable CA2211 // Non-constant fields should not be visible
 
 namespace ILAccess.Example;
 
@@ -116,7 +118,7 @@ internal class Program
         GetSetStaticPrivateField();
         CallPrivateConstructor();
 
-        var c = Activator.CreateInstance<Class>();
+        var c = (Class)RuntimeHelpers.GetUninitializedObject(typeof(Class));
         CallPrivateMethod(c);
         GetPrivateProperty(c);
         GetSetPrivateField(c);
