@@ -1,4 +1,8 @@
-﻿namespace ILAccess.Tests.AssemblyToProcess;
+﻿using System;
+using System.Reflection;
+// ReSharper disable ConvertToConstant.Local
+
+namespace ILAccess.Tests.AssemblyToProcess;
 
 public partial class ILAccessorTestCases
 {
@@ -51,7 +55,8 @@ public partial class ILAccessorTestCases
         ref var value = ref obj.RefPublicStaticField();
 
         var original = TestModel.PublicStaticField;
-        using var _ = Disposable.Create(() => TestModel.PublicStaticField = original); // Restore original value after test
+        using var _ =
+            Disposable.Create(() => TestModel.PublicStaticField = original); // Restore original value after test
 
         Assert.Equal(original, value);
 
@@ -113,5 +118,20 @@ public partial class ILAccessorTestCases
         {
             return (int)typeof(TestModel).GetRequiredField("PrivateField").GetValue(obj)!;
         }
+    }
+
+    [ILAccessor(ILAccessorKind.Field, Name = "_message")]
+    public static extern ref string Message(Exception obj);
+
+    [Fact]
+    public void RefPrivateField_CrossAssembly_Get_Set()
+    {
+        var ex = new Exception("xxxxxx");
+        ref var value = ref Message(ex);
+        Assert.Equal(ex.Message, value);
+
+        var newValue = ex.Message + "_Modified";
+        value = newValue;
+        Assert.Equal(newValue, ex.Message);
     }
 }

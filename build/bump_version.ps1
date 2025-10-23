@@ -20,7 +20,9 @@ $callback = {
 }
 $root = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $path = Join-Path $root "pkg.version"
-(Get-Content -Path $path) | ForEach-Object { $reg.Replace($_, $callback) } | Set-Content $path
 
-Write-Output "Finished. Press any key to exit."
+$prev = Get-Content -Path $path
+$new = $reg.Replace($prev, $callback)
+Set-Content -Path $path -Value $new
+Write-Output "Updated version $prev -> $new"
 Read-Host

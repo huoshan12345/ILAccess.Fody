@@ -37,7 +37,7 @@ internal sealed class MethodWeaver
     {
         try
         {
-            _log.Debug($"Processing: {_method.FullName}");
+            _log.Info($"Processing: {_method.FullName}");
             return ProcessImpl();
         }
         catch (InstructionWeavingException ex)
@@ -134,6 +134,7 @@ internal sealed class MethodWeaver
             case ILAccessorKind.StaticField:
             {
                 var fields = type.Fields.Where(f => f.Name == name).ToArray();
+
                 switch (fields.Length)
                 {
                     case 0: throw new WeavingException($"Field '{name}' not found on type '{type.FullName}'.");

@@ -1,11 +1,17 @@
 <Solution>
-  <Folder Name="/build/">
-    <File Path=".editorconfig" />
+  <Folder Name="/.github/">
+    <File Path=".github/dependabot.yml" />
     <File Path=".github/workflows/build.yml" />
-    <File Path="build/incre_ver.ps1" />
+    <File Path=".github/workflows/send-event.yml" />
+  </Folder>
+  <Folder Name="/build/">
+    <File Path="build/bump_version.ps1" />
     <File Path="build/pack.ps1" />
     <File Path="build/pkg.version" />
-    <File Path="build/test_all.ps1" />
+  </Folder>
+  <Folder Name="/config/">
+    <File Path=".editorconfig" />
+    <File Path="NuGet.Config" />
     <File Path="README.md" />
   </Folder>
   <Folder Name="/example/">

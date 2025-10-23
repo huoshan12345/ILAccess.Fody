@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 // ReSharper disable UnassignedField.Global
 
@@ -145,6 +146,10 @@ internal class Program
 
     private static void Main(string[] args)
     {
+        var ex = new Exception("xxxxxx");
+        ref var value = ref ex.Message();
+        Console.WriteLine($"Original value: {value}");
+
         CallStaticPrivateMethod();
         GetSetStaticPrivateField();
         CallPrivateConstructor();
@@ -157,4 +162,10 @@ internal class Program
 
         Console.Read();
     }
+}
+
+public static class Extensions
+{
+    [ILAccessor(ILAccessorKind.Field, Name = "_message")]
+    public static extern ref string Message(this Exception obj);
 }
