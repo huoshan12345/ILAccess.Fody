@@ -1,4 +1,5 @@
-﻿using MoreFodyHelpers.Support;
+﻿using Mono.Cecil.Rocks;
+using MoreFodyHelpers.Support;
 
 namespace ILAccess.Fody.Processing;
 
@@ -65,7 +66,18 @@ internal sealed class MethodWeaver
         if (_method.Parameters.Count == 0)
             throw new WeavingException("The method must have at least one parameter to identify the target type.");
 
-        var type = _method.Parameters[0].ParameterType.Resolve();
+        var typeRef = _method.Parameters[0].ParameterType;
+
+        if (typeRef.HasGenericParameters)
+        {
+            var genericType = (GenericInstanceType)typeRef;
+            foreach (var parameter in typeRef.GenericParameters)
+            {
+                genericType.GenericArguments.Add(parameter);
+            }
+        }
+
+        var type = typeRef.Resolve();
         var kind = (ILAccessorKind)_anchorAttribute.ConstructorArguments.Single().Value;
         var name = (string)_anchorAttribute.Properties.Single().Argument.Value;
 
@@ -84,7 +96,6 @@ internal sealed class MethodWeaver
             case ILAccessorKind.Field:
             case ILAccessorKind.StaticField:
             {
-                var isReturnRef = _method.ReturnType.IsByReference;
                 var fields = type.Fields.Where(f => f.Name == name).ToArray();
                 if (fields.Length == 0)
                     throw new WeavingException($"Field '{name}' not found on type '{type.FullName}'.");
@@ -93,13 +104,15 @@ internal sealed class MethodWeaver
                     throw new WeavingException($"Multiple fields named '{name}' found on type '{type.FullName}'.");
 
                 var field = fields[0];
+                var fieldRef = new FieldReference(field.Name, field.FieldType, typeRef);
+                var isReturnRef = _method.ReturnType.IsByReference;
 
                 if (field.IsStatic)
                 {
                     var code = isReturnRef
                         ? OpCodes.Ldsflda
                         : OpCodes.Ldsfld;
-                    _il.IL.Append(_il.Create(code, field));
+                    _il.IL.Append(_il.Create(code, fieldRef));
                 }
                 else
                 {
@@ -107,7 +120,7 @@ internal sealed class MethodWeaver
                         ? OpCodes.Ldflda
                         : OpCodes.Ldfld;
                     _il.IL.Append(_il.Create(OpCodes.Ldarg_0));
-                    _il.IL.Append(_il.Create(code, field));
+                    _il.IL.Append(_il.Create(code, fieldRef));
                 }
 
                 _il.IL.Append(_il.Create(OpCodes.Ret));

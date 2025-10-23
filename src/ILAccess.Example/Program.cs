@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+// ReSharper disable UnassignedField.Global
+
 // ReSharper disable UnusedMember.Local
 // ReSharper disable FieldCanBeMadeReadOnly.Local
 // ReSharper disable InconsistentNaming
@@ -10,7 +12,8 @@ using System.Runtime.CompilerServices;
 // ReSharper disable UnusedVariable
 #pragma warning disable CS0169 // Field is never used
 #pragma warning disable IDE0044 // Add readonly modifier
-#pragma warning disable IDE0051
+#pragma warning disable IDE0051 // Remove unused private members
+#pragma warning disable IDE0052 // Remove unread private members
 #pragma warning disable IDE0059 // Unnecessary assignment of a value
 #pragma warning disable CA1822 // Mark members as static
 #pragma warning disable IDE0060 // Remove unused parameter
@@ -18,6 +21,22 @@ using System.Runtime.CompilerServices;
 #pragma warning disable CA2211 // Non-constant fields should not be visible
 
 namespace ILAccess.Example;
+
+public class GenericTestModel<T>
+{
+    private static T? PrivateStaticField;
+    public static T? PublicStaticField;
+    private T? PrivateField;
+    public T? PublicField;
+}
+
+public static class TestModelAccessors<T>
+{
+    [ILAccessor(ILAccessorKind.StaticField, Name = "PublicStaticField")]
+    public static extern T? PublicStaticField(GenericTestModel<T> c);
+
+    public static T? _PublicStaticField(GenericTestModel<T> c) => GenericTestModel<T>.PublicStaticField;
+}
 
 public class Class
 {
