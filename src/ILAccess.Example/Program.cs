@@ -23,34 +23,6 @@ using System.Runtime.CompilerServices;
 
 namespace ILAccess.Example;
 
-public class TestModel
-{
-    internal TestModel() { }
-
-    private static readonly Random _random = new(0);
-    internal readonly int _i = _random.Next(100, 1000);
-    internal readonly string _s = "ssssssss";
-    internal readonly double _d = _random.NextDouble();
-
-    internal TestModel(int i, string s, ref double rd)
-    {
-        _i = i;
-        _s = s;
-        _d = rd;
-    }
-}
-
-public static class Accessors
-{
-    [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern TestModel Ctor(TestModel? c = null);
-
-    [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern TestModel Ctor(TestModel? c, int i, string s, ref double rf);
-
-    public static TestModel _Ctor(TestModel? c, int i, string s, ref double rf) => new(i, s, ref rf);
-}
-
 public class Class
 {
     private static void StaticPrivateMethod() { }

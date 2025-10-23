@@ -15,15 +15,17 @@ public class ModuleWeaver : BaseModuleWeaver
     {
         using var context = new ModuleWeavingContext(ModuleDefinition, WeaverAnchors.AssemblyName, ProjectDirectoryPath);
 
-        var emitted = false;
-
+        var emittedAssemblyNames = new HashSet<string>();
         foreach (var type in ModuleDefinition.GetTypes())
         {
             foreach (var method in type.Methods)
             {
                 try
                 {
-                    emitted = MethodWeaver.TryProcess(context, ModuleDefinition, method, _log) || emitted;
+                    if (MethodWeaver.TryProcess(context, ModuleDefinition, method, _log, out var assemblyName))
+                    {
+                        emittedAssemblyNames.Add(assemblyName);
+                    }
                 }
                 catch (WeavingException ex)
                 {
@@ -38,17 +40,13 @@ public class ModuleWeaver : BaseModuleWeaver
             }
         }
 
-        if (emitted)
+        foreach (var assemblyName in emittedAssemblyNames)
         {
-            ModuleDefinition.AddIgnoresAccessCheck();
+            ModuleDefinition.AddIgnoresAccessCheck(assemblyName);
         }
     }
 
-    public override IEnumerable<string> GetAssembliesForScanning()
-    {
-        yield return "mscorlib";
-        yield return "System";
-    }
+    public override IEnumerable<string> GetAssembliesForScanning() => [];
 
     protected virtual void AddError(string message, SequencePoint? sequencePoint)
         => _log.Error(message, sequencePoint);

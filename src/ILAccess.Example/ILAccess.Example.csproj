@@ -22,4 +22,8 @@
     <WeaverFiles Include="..\$(_WeaverName)\bin\$(Configuration)\netstandard2.0\$(_WeaverName).dll" />
   </ItemGroup>-->
 
+  <Target Name="Show" AfterTargets="Build">
+    <Message Text="IntermediateAssembly: @(IntermediateAssembly)" Importance="high" />
+  </Target>
+
 </Project>

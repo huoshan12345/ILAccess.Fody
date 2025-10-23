@@ -23,22 +23,30 @@ internal sealed class MethodWeaver
         _log = new MethodWeaverLogger(log, _method);
     }
 
-    public static bool TryProcess(ModuleWeavingContext context, ModuleDefinition module, MethodDefinition method, IWeaverLogger log)
+    public static bool TryProcess(
+        ModuleWeavingContext context,
+        ModuleDefinition module,
+        MethodDefinition method,
+        IWeaverLogger log,
+        [NotNullWhen(true)] out string? assemblyName)
     {
         var attr = method.CustomAttributes.FirstOrDefault(m => m.AttributeType.FullName == WeaverAnchors.AttributeName);
         if (attr == null)
+        {
+            assemblyName = null;
             return false;
+        }
 
         var weaver = new MethodWeaver(context, module, method, attr, log);
-        return weaver.Process();
+        return weaver.Process(out assemblyName);
     }
 
-    private bool Process()
+    private bool Process([NotNullWhen(true)] out string? assemblyName)
     {
         try
         {
             _log.Info($"Processing: {_method.FullName}");
-            return ProcessImpl();
+            return ProcessImpl(out assemblyName);
         }
         catch (InstructionWeavingException ex)
         {
@@ -60,7 +68,7 @@ internal sealed class MethodWeaver
         }
     }
 
-    private bool ProcessImpl()
+    private bool ProcessImpl([NotNullWhen(true)] out string? assemblyName)
     {
         if (_method.Parameters.Count == 0)
             throw new WeavingException("The method must have at least one parameter to identify the target type.");
@@ -83,7 +91,6 @@ internal sealed class MethodWeaver
             throw new WeavingException($"The property 'Name' should be specific for {kind} on {WeaverAnchors.AttributeName}");
 
         var isReturnRef = _method.ReturnType.IsByReference;
-
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (kind)
         {
@@ -111,6 +118,7 @@ internal sealed class MethodWeaver
                 _il.IL.Append(_il.Create(callCode, method));
                 _il.IL.Append(_il.Create(OpCodes.Ret));
 
+                assemblyName = method.DeclaringType.Module.Assembly.Name.Name;
                 return true;
 
                 MethodDefinition FindMethod()
@@ -162,10 +170,12 @@ internal sealed class MethodWeaver
 
                 _il.IL.Append(_il.Create(OpCodes.Ret));
 
+                assemblyName = field.DeclaringType.Module.Assembly.Name.Name;
                 return true;
             }
         }
 
+        assemblyName = null;
         return false;
     }
 }

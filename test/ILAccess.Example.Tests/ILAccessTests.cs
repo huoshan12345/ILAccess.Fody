@@ -34,7 +34,8 @@ public class ILAccessTests
         var assemblyPath = Path.Combine(AppContext.BaseDirectory, $"{projectName}.dll");
         var weaver = Path.Combine(AppContext.BaseDirectory, "ILAccess.Fody.dll");
 
-        var assembly = Assembly.LoadFile(assemblyPath);
+        var assemblyBytes = File.ReadAllBytes(assemblyPath);
+        var assembly = Assembly.Load(assemblyBytes);
         var refs = assembly.GetAllReferenceAssemblies().Select(m => m.Location).JoinWith(";");
 
         var task = new WeavingTask
@@ -57,8 +58,8 @@ public class ILAccessTests
             NCrunchOriginalSolutionDirectory = null,
             SolutionDirectory = rootDir,
             DefineConstants = null,
-            IntermediateCopyLocalFilesCache = null,
-            RuntimeCopyLocalFilesCache = null,
+            IntermediateCopyLocalFilesCache = Path.Combine(AppContext.BaseDirectory, $"{projectName}.Fody.CopyLocal.cache"),
+            RuntimeCopyLocalFilesCache = Path.Combine(AppContext.BaseDirectory, $"{projectName}.Fody.RuntimeCopyLocal.cache"),
             GenerateXsd = false,
             TreatWarningsAsErrors = false,
             BuildEngine = new FakeBuildEngine(),
