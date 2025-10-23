@@ -1,7 +1,9 @@
-﻿namespace ILAccess;
+﻿#pragma warning disable CS0436 // Type conflicts with imported type
+
+namespace ILAccess;
 
 /// <summary>
-/// Specifies the kind of target to which an <see cref="ILAccessAttribute" /> is providing access.
+/// Specifies the kind of target to which an <see cref="ILAccessorAttribute" /> is providing access.
 /// </summary>
 public enum ILAccessorKind
 {
@@ -71,11 +73,11 @@ public enum ILAccessorKind
 /// </code>
 /// </remarks>
 /// <remarks>
-/// Instantiates an <see cref="ILAccessAttribute"/> providing access to a member of kind <see cref="ILAccessorKind"/>.
+/// Instantiates an <see cref="ILAccessorAttribute"/> providing access to a member of kind <see cref="ILAccessorKind"/>.
 /// </remarks>
 /// <param name="kind">The kind of the target to which access is provided.</param>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-public sealed class ILAccessAttribute(ILAccessorKind kind) : Attribute
+public sealed class ILAccessorAttribute(ILAccessorKind kind) : Attribute
 {
     // Block of text to include above when Generics support is added:
     //

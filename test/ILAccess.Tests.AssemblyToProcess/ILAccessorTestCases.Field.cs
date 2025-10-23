@@ -3,69 +3,40 @@
 public partial class ILAccessorTestCases
 {
     [Fact]
-    public void PublicStaticField_Get_Set()
+    public void PublicStaticField_Get()
     {
         var obj = new TestModel();
-        ref var value = ref obj.PublicStaticField();
-
-        var original = TestModel.PublicStaticField;
-        using var _ = Disposable.Create(() => TestModel.PublicStaticField = original); // Restore original value after test
-
-        Assert.Equal(original, value);
-
-        const int newValue = 1122334455;
-        value = newValue;
-        Assert.Equal(newValue, TestModel.PublicStaticField);
+        var value = obj.PublicStaticField();
+        Assert.Equal(TestModel.PublicStaticField, value);
     }
 
     [Fact]
-    public void PrivateStaticField_Get_Set()
+    public void PrivateStaticField_Get()
     {
         var obj = new TestModel();
-        ref var value = ref obj.PrivateStaticField();
-
-        var original = Get();
-        using var _ = Disposable.Create(() => Set(original)); // Restore original value after test
-
-        Assert.Equal(original, value);
-
-        const int newValue = 1122334455;
-        value = newValue;
-        Assert.Equal(newValue, Get());
+        var value = obj.PrivateStaticField();
+        Assert.Equal(Get(), value);
 
         static int Get()
         {
             return (int)typeof(TestModel).GetRequiredField("PrivateStaticField").GetValue(null)!;
         }
-
-        static void Set(int value)
-        {
-            typeof(TestModel).GetRequiredField("PrivateStaticField").SetValue(null, value);
-        }
     }
 
     [Fact]
-    public void PublicField_Get_Set()
+    public void PublicField_Get()
     {
         var obj = new TestModel();
-        ref var value = ref obj.PublicField();
+        var value = obj.PublicField();
         Assert.Equal(obj.PublicField, value);
-
-        const int newValue = 1122334455;
-        value = newValue;
-        Assert.Equal(newValue, obj.PublicField);
     }
 
     [Fact]
-    public void PrivateField_Get_Set()
+    public void PrivateField_Get()
     {
         var obj = new TestModel();
-        ref var value = ref obj.PrivateField();
+        var value = obj.PrivateField();
         Assert.Equal(Get(obj), value);
-
-        const int newValue = 1122334455;
-        value = newValue;
-        Assert.Equal(newValue, Get(obj));
 
         static int Get(TestModel obj)
         {

@@ -40,15 +40,42 @@ public class TestModel
 
 public static class TestModelAccessors
 {
-    [ILAccess(ILAccessorKind.StaticField, Name = "PrivateStaticField")]
-    public static extern ref int PrivateStaticField(this TestModel? c);
+    [ILAccessor(ILAccessorKind.StaticField, Name = "PrivateStaticField")]
+    public static extern int PrivateStaticField(this TestModel? c);
 
-    [ILAccess(ILAccessorKind.StaticField, Name = "PublicStaticField")]
-    public static extern ref int PublicStaticField(this TestModel? c);
+    [ILAccessor(ILAccessorKind.StaticField, Name = "PublicStaticField")]
+    public static extern int PublicStaticField(this TestModel? c);
 
-    [ILAccess(ILAccessorKind.Field, Name = "PrivateField")]
-    public static extern ref int PrivateField(this TestModel c);
+    [ILAccessor(ILAccessorKind.Field, Name = "PrivateField")]
+    public static extern int PrivateField(this TestModel c);
 
-    [ILAccess(ILAccessorKind.Field, Name = "PublicField")]
-    public static extern ref int PublicField(this TestModel c);
+    [ILAccessor(ILAccessorKind.Field, Name = "PublicField")]
+    public static extern int PublicField(this TestModel c);
+
+    public static int _PublicField(this TestModel c)
+    {
+        return c.PublicField;
+    }
+
+    public static ref int _RefPublicField(this TestModel c)
+    {
+        return ref c.PublicField;
+    }
+
+    public static int _PublicStaticField(this TestModel c)
+    {
+        return TestModel.PublicStaticField;
+    }
+
+    [ILAccessor(ILAccessorKind.StaticField, Name = "PrivateStaticField")]
+    public static extern ref int RefPrivateStaticField(this TestModel? c);
+
+    [ILAccessor(ILAccessorKind.StaticField, Name = "PublicStaticField")]
+    public static extern ref int RefPublicStaticField(this TestModel? c);
+
+    [ILAccessor(ILAccessorKind.Field, Name = "PrivateField")]
+    public static extern ref int RefPrivateField(this TestModel c);
+
+    [ILAccessor(ILAccessorKind.Field, Name = "PublicField")]
+    public static extern ref int RefPublicField(this TestModel c);
 }

@@ -9,9 +9,15 @@
 
   <ItemGroup>
     <PackageReference Include="MoreFodyHelpers" Version="0.0.8" GeneratePathProperty="true" />
-    <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" />
     <None Include="$(PkgMoreFodyHelpers)\lib\$(TargetFramework)\MoreFodyHelpers.dll" Visible="false">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\ILAccess\ILAccessorAttribute.cs">
+      <Link>ILAccessorAttribute.cs</Link>
+    </Compile>
+  </ItemGroup>
+
 </Project>
