@@ -21,6 +21,7 @@
   </Folder>
   <Folder Name="/test/">
     <File Path="test/Directory.Build.props" />
+    <File Path="test/EmitGeneratedFiles.props" />
     <Project Path="test/ILAccess.Tests.AssemblyToProcess/ILAccess.Tests.AssemblyToProcess.csproj" />
     <Project Path="test/ILAccess.Tests.InvalidAssemblyToProcess/ILAccess.Tests.InvalidAssemblyToProcess.csproj" />
     <Project Path="test/ILAccess.Tests.SourceGenerator/ILAccess.Tests.SourceGenerator.csproj" />

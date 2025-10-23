@@ -7,6 +7,9 @@
 // ReSharper disable UnusedMember.Global
 // ReSharper disable UnusedVariable
 // ReSharper disable UnassignedField.Global
+
+using System;
+
 #pragma warning disable CS0169 // Field is never used
 #pragma warning disable IDE0044 // Add readonly modifier
 #pragma warning disable IDE0051 // Remove unused private members
@@ -41,17 +44,23 @@ public class TestModel
     public int PublicPropertyWithPrivateSetter { get; private set; } = _start++;
     public int PublicPropertyWithPrivateGetter { private get; set; } = _start++;
     public int PublicPropertyWithoutSetter { get; } = _start++;
+
+    internal TestModel() { }
+
+    private static readonly Random _random = new(0);
+    internal readonly int _i = _random.Next(100, 1000);
+    internal readonly string _s = _random.NextString(10);
+    internal readonly double _d = _random.NextDouble();
+
+    internal TestModel(int i, string s, ref double rd)
+    {
+        _i = i;
+        _s = s;
+        _d = rd;
+    }
 }
 
-public class GenericTestModel<T> : TestModel
-{
-    private static T? PrivateStaticField;
-    public new static T? PublicStaticField;
-    private T? PrivateField;
-    public new T? PublicField;
-}
-
-public static class TestModelAccessors
+public static class TestModelExtensions
 {
     [ILAccessor(ILAccessorKind.StaticField, Name = "PrivateStaticField")]
     public static extern int PrivateStaticField(this TestModel? c);
@@ -78,45 +87,13 @@ public static class TestModelAccessors
     public static extern ref int RefPublicField(this TestModel c);
 }
 
-public static class TestModelAccessors<T>
+public static class Accessors
 {
-    [ILAccessor(ILAccessorKind.StaticField, Name = "PrivateStaticField")]
-    public static extern T PrivateStaticField(GenericTestModel<T>? c);
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern TestModel Ctor(TestModel? c = null);
 
-    [ILAccessor(ILAccessorKind.StaticField, Name = "PublicStaticField")]
-    public static extern T PublicStaticField(GenericTestModel<T>? c);
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern TestModel Ctor(TestModel? c, int i, string s, ref double rf);
 
-    [ILAccessor(ILAccessorKind.Field, Name = "PrivateField")]
-    public static extern T PrivateField(GenericTestModel<T> c);
-
-    [ILAccessor(ILAccessorKind.Field, Name = "PublicField")]
-    public static extern T PublicField(GenericTestModel<T> c);
-
-    [ILAccessor(ILAccessorKind.StaticField, Name = "PrivateStaticField")]
-    public static extern ref T RefPrivateStaticField(GenericTestModel<T>? c);
-
-    [ILAccessor(ILAccessorKind.StaticField, Name = "PublicStaticField")]
-    public static extern ref T RefPublicStaticField(GenericTestModel<T>? c);
-
-    [ILAccessor(ILAccessorKind.Field, Name = "PrivateField")]
-    public static extern ref T RefPrivateField(GenericTestModel<T> c);
-
-    [ILAccessor(ILAccessorKind.Field, Name = "PublicField")]
-    public static extern ref T RefPublicField(GenericTestModel<T> c);
-
-    public static T? _PublicStaticField(GenericTestModel<T>? c) => GenericTestModel<T>.PublicStaticField;
-}
-
-public static class TestModelExtensions
-{
-    public static T PrivateStaticField<T>(this GenericTestModel<T>? c) => TestModelAccessors<T>.PrivateStaticField(c);
-    public static T PublicStaticField<T>(this GenericTestModel<T>? c) => TestModelAccessors<T>.PublicStaticField(c);
-    public static T PrivateField<T>(this GenericTestModel<T> c) => TestModelAccessors<T>.PrivateField(c);
-    public static T PublicField<T>(this GenericTestModel<T> c) => TestModelAccessors<T>.PublicField(c);
-    public static ref T RefPrivateStaticField<T>(this GenericTestModel<T>? c) => ref TestModelAccessors<T>.RefPrivateStaticField(c);
-    public static ref T RefPublicStaticField<T>(this GenericTestModel<T>? c) => ref TestModelAccessors<T>.RefPublicStaticField(c);
-    public static ref T RefPrivateField<T>(this GenericTestModel<T> c) => ref TestModelAccessors<T>.RefPrivateField(c);
-    public static ref T RefPublicField<T>(this GenericTestModel<T> c) => ref TestModelAccessors<T>.RefPublicField(c);
-
-    public static T? _PublicStaticField<T>(this GenericTestModel<T>? c) => GenericTestModel<T>.PublicStaticField;
+    public static TestModel _Ctor(TestModel? c, int i, string s, ref double rf) => new(i, s, ref rf);
 }

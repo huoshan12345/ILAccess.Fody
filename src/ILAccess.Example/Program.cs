@@ -22,20 +22,32 @@ using System.Runtime.CompilerServices;
 
 namespace ILAccess.Example;
 
-public class GenericTestModel<T>
+public class TestModel
 {
-    private static T? PrivateStaticField;
-    public static T? PublicStaticField;
-    private T? PrivateField;
-    public T? PublicField;
+    internal TestModel() { }
+
+    private static readonly Random _random = new(0);
+    internal readonly int _i = _random.Next(100, 1000);
+    internal readonly string _s = "ssssssss";
+    internal readonly double _d = _random.NextDouble();
+
+    internal TestModel(int i, string s, ref double rd)
+    {
+        _i = i;
+        _s = s;
+        _d = rd;
+    }
 }
 
-public static class TestModelAccessors<T>
+public static class Accessors
 {
-    [ILAccessor(ILAccessorKind.StaticField, Name = "PublicStaticField")]
-    public static extern T? PublicStaticField(GenericTestModel<T> c);
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern TestModel Ctor(TestModel? c = null);
 
-    public static T? _PublicStaticField(GenericTestModel<T> c) => GenericTestModel<T>.PublicStaticField;
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern TestModel Ctor(TestModel? c, int i, string s, ref double rf);
+
+    public static TestModel _Ctor(TestModel? c, int i, string s, ref double rf) => new(i, s, ref rf);
 }
 
 public class Class

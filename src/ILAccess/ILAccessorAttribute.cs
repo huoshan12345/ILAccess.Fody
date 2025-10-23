@@ -67,7 +67,7 @@ public enum ILAccessorKind
 /// {
 ///     PrivateMethod(c);
 ///
-///     [UnsafeAccessor(UnsafeAccessorKind.Method, Name = nameof(PrivateMethod))]
+///     [ILAccessor(ILAccessorKind.Method, Name = nameof(PrivateMethod))]
 ///     extern static void PrivateMethod(Class c);
 /// }
 /// </code>

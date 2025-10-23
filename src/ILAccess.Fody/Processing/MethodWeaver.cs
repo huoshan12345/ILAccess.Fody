@@ -1,5 +1,4 @@
-﻿using Mono.Cecil.Rocks;
-using MoreFodyHelpers.Support;
+﻿using MoreFodyHelpers.Support;
 
 namespace ILAccess.Fody.Processing;
 
@@ -79,19 +78,56 @@ internal sealed class MethodWeaver
 
         var type = typeRef.Resolve();
         var kind = (ILAccessorKind)_anchorAttribute.ConstructorArguments.Single().Value;
-        var name = (string)_anchorAttribute.Properties.Single().Argument.Value;
+        var name = (string?)_anchorAttribute.Properties.SingleOrDefault().Argument.Value;
+        if (name is null && kind != ILAccessorKind.Constructor)
+            throw new WeavingException($"The property 'Name' should be specific for {kind} on {WeaverAnchors.AttributeName}");
+
+        var isReturnRef = _method.ReturnType.IsByReference;
 
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (kind)
         {
             case ILAccessorKind.Constructor:
-            {
-                return true;
-            }
             case ILAccessorKind.Method:
             case ILAccessorKind.StaticMethod:
             {
+                var isCtor = kind == ILAccessorKind.Constructor;
+                var isStatic = kind == ILAccessorKind.StaticMethod;
+                var method = FindMethod();
+
+                var start = isCtor || isStatic ? 1 : 0;
+                for (var i = start; i < _method.Parameters.Count; i++)
+                {
+                    _il.IL.Append(_il.IL.Create(OpCodes.Ldarg, i));
+                }
+
+                var callCode = (isCtor, isStatic) switch
+                {
+                    (true, _) => OpCodes.Newobj,
+                    (_, true) => OpCodes.Call,
+                    _ => OpCodes.Callvirt,
+                };
+
+                _il.IL.Append(_il.Create(callCode, method));
+                _il.IL.Append(_il.Create(OpCodes.Ret));
+
                 return true;
+
+                MethodDefinition FindMethod()
+                {
+                    var paras = _method.Parameters.Skip(1).Select(p => p.ParameterType).ToArray();
+                    var methods = type.Methods.Where(m => m.IsConstructor == isCtor
+                                                                  && m.IsStatic == isStatic
+                                                                  && m.Parameters.Select(x => x.ParameterType)
+                                                                      .SequenceEqual(paras, TypeReferenceEqualityComparer.Instance))
+                        .ToArray();
+
+                    if (methods.Length == 0)
+                        throw new WeavingException($"Method '{name}' not found on type '{type.FullName}' with specified parameters.");
+                    if (methods.Length > 1)
+                        throw new WeavingException($"Multiple methods named '{name}' found on type '{type.FullName}' with specified parameters.");
+                    return methods[0];
+                }
             }
             case ILAccessorKind.Field:
             case ILAccessorKind.StaticField:
@@ -105,7 +141,6 @@ internal sealed class MethodWeaver
 
                 var field = fields[0];
                 var fieldRef = new FieldReference(field.Name, field.FieldType, typeRef);
-                var isReturnRef = _method.ReturnType.IsByReference;
 
                 if (field.IsStatic)
                 {
