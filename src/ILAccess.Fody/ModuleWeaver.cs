@@ -44,7 +44,11 @@ public class ModuleWeaver : BaseModuleWeaver
         }
     }
 
-    public override IEnumerable<string> GetAssembliesForScanning() => [];
+    public override IEnumerable<string> GetAssembliesForScanning()
+    {
+        yield return "mscorlib";
+        yield return "System";
+    }
 
     protected virtual void AddError(string message, SequencePoint? sequencePoint)
         => _log.Error(message, sequencePoint);
