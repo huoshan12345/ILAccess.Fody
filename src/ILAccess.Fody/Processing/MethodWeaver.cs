@@ -122,22 +122,23 @@ internal sealed class MethodWeaver
                                                                       .SequenceEqual(paras, TypeReferenceEqualityComparer.Instance))
                         .ToArray();
 
-                    if (methods.Length == 0)
-                        throw new WeavingException($"Method '{name}' not found on type '{type.FullName}' with specified parameters.");
-                    if (methods.Length > 1)
-                        throw new WeavingException($"Multiple methods named '{name}' found on type '{type.FullName}' with specified parameters.");
-                    return methods[0];
+                    return methods.Length switch
+                    {
+                        0 => throw new WeavingException($"Method '{name}' not found on type '{type.FullName}' with specified parameters."),
+                        > 1 => throw new WeavingException($"Multiple methods named '{name}' found on type '{type.FullName}' with specified parameters."),
+                        _ => methods[0],
+                    };
                 }
             }
             case ILAccessorKind.Field:
             case ILAccessorKind.StaticField:
             {
                 var fields = type.Fields.Where(f => f.Name == name).ToArray();
-                if (fields.Length == 0)
-                    throw new WeavingException($"Field '{name}' not found on type '{type.FullName}'.");
-
-                if (fields.Length > 1)
-                    throw new WeavingException($"Multiple fields named '{name}' found on type '{type.FullName}'.");
+                switch (fields.Length)
+                {
+                    case 0: throw new WeavingException($"Field '{name}' not found on type '{type.FullName}'.");
+                    case > 1: throw new WeavingException($"Multiple fields named '{name}' found on type '{type.FullName}'.");
+                }
 
                 var field = fields[0];
                 var fieldRef = new FieldReference(field.Name, field.FieldType, typeRef);
