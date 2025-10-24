@@ -84,7 +84,7 @@ internal sealed class MethodWeaver
             }
         }
 
-        var type = typeRef.Resolve();
+        var type = typeRef.ResolveRequiredType(_context);
         var kind = (ILAccessorKind)_anchorAttribute.ConstructorArguments.Single().Value;
         var name = (string?)_anchorAttribute.Properties.SingleOrDefault().Argument.Value;
         if (name is null && kind != ILAccessorKind.Constructor)

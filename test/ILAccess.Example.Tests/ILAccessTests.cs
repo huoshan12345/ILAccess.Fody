@@ -5,6 +5,8 @@ using Fody;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Xunit;
+using Xunit.Abstractions;
+using static System.StringSplitOptions;
 
 namespace ILAccess.Example.Tests;
 
@@ -22,7 +24,7 @@ public static class Extensions
     }
 }
 
-public class ILAccessTests
+public class ILAccessTests(ITestOutputHelper output)
 {
     [Fact]
     public void Weave_Test()
@@ -36,7 +38,12 @@ public class ILAccessTests
 
         var assemblyBytes = File.ReadAllBytes(assemblyPath);
         var assembly = Assembly.Load(assemblyBytes);
-        var refs = assembly.GetAllReferenceAssemblies().Select(m => m.Location).JoinWith(";");
+        var refs = assembly.GetAllReferenceAssemblies().Select(m => m.Location).OrderBy(m => m).ToArray();
+
+        var refsFromText = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "refs.txt"))
+            .SplitToLines(RemoveEmptyEntries | TrimEntries)
+            .OrderBy(m => m)
+            .ToArray();
 
         var task = new WeavingTask
         {
@@ -49,7 +56,7 @@ public class ILAccessTests
             ProjectDirectory = projectDir,
             ProjectFile = projectFile,
             DocumentationFile = null,
-            References = refs,
+            References = refsFromText.JoinWith(";"),
             ReferenceCopyLocalFiles = [],
             RuntimeCopyLocalFiles = [],
             WeaverFiles = [new TaskItem(weaver)],
