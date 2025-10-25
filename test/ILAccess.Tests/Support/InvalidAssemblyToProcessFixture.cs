@@ -1,55 +1,52 @@
 ﻿using System.Linq;
 using System.Reflection;
-using Fody;
-using ILAccess.Fody;
 using ILAccess.Tests.InvalidAssemblyToProcess;
-using Mono.Cecil;
+using ModuleDefinition = Mono.Cecil.ModuleDefinition;
 
-namespace ILAccess.Tests.Support
+namespace ILAccess.Tests.Support;
+
+public static class InvalidAssemblyToProcessFixture
 {
-    public static class InvalidAssemblyToProcessFixture
+    public static TestResult TestResult { get; }
+
+    public static ModuleDefinition ResultModule { get; }
+
+    public static bool IsDebug { get; }
+
+    static InvalidAssemblyToProcessFixture()
     {
-        public static TestResult TestResult { get; }
+        var weavingTask = new ModuleWeaver();
+        TestResult = weavingTask.ExecuteTestRun(
+            FixtureHelper.IsolateAssembly<InvalidAssemblyToProcessReference>(),
+            false,
+            beforeExecuteCallback: AssemblyToProcessFixture.BeforeExecuteCallback
+        );
 
-        public static ModuleDefinition ResultModule { get; }
+        using var assemblyResolver = new TestAssemblyResolver();
 
-        public static bool IsDebug { get; }
-
-        static InvalidAssemblyToProcessFixture()
+        ResultModule = ModuleDefinition.ReadModule(TestResult.AssemblyPath, new ReaderParameters(ReadingMode.Immediate)
         {
-            var weavingTask = new ModuleWeaver();
-            TestResult = weavingTask.ExecuteTestRun(
-                FixtureHelper.IsolateAssembly<InvalidAssemblyToProcessReference>(),
-                false,
-                beforeExecuteCallback: AssemblyToProcessFixture.BeforeExecuteCallback
-            );
+            AssemblyResolver = assemblyResolver
+        });
 
-            using var assemblyResolver = new TestAssemblyResolver();
+        var typeName = TestResult.Assembly.GetName().Name + "." + nameof(InvalidAssemblyToProcessReference);
+        IsDebug = (bool)TestResult.Assembly.GetType(typeName, true)!
+            .InvokeMember(name: nameof(IsDebug),
+                invokeAttr: BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Static,
+                binder: null,
+                target: null,
+                args: null)!;
+    }
 
-            ResultModule = ModuleDefinition.ReadModule(TestResult.AssemblyPath, new ReaderParameters(ReadingMode.Immediate)
-            {
-                AssemblyResolver = assemblyResolver
-            });
+    public static string ShouldHaveError(string className, string methodName, bool sequencePointRequired)
+    {
+        var expectedMessagePart = $" {className}::{methodName}(";
+        var errorMessage = TestResult.Errors.SingleOrDefault(err => err.Text.Contains(expectedMessagePart));
+        errorMessage.ShouldNotBeNull();
 
-            var typeName = TestResult.Assembly.GetName().Name + "." + nameof(InvalidAssemblyToProcessReference);
-            IsDebug = (bool)TestResult.Assembly.GetType(typeName, true)!
-                                      .InvokeMember(name: nameof(IsDebug),
-                                                    invokeAttr: BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Static,
-                                                    binder: null,
-                                                    target: null,
-                                                    args: null)!;
-        }
+        if (sequencePointRequired)
+            errorMessage!.SequencePoint.ShouldNotBeNull();
 
-        public static string ShouldHaveError(string className, string methodName, bool sequencePointRequired)
-        {
-            var expectedMessagePart = $" {className}::{methodName}(";
-            var errorMessage = TestResult.Errors.SingleOrDefault(err => err.Text.Contains(expectedMessagePart));
-            errorMessage.ShouldNotBeNull();
-
-            if (sequencePointRequired)
-                errorMessage!.SequencePoint.ShouldNotBeNull();
-
-            return errorMessage!.Text;
-        }
+        return errorMessage!.Text;
     }
 }

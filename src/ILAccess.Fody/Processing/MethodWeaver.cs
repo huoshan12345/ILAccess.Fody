@@ -1,290 +1,307 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
+﻿using System.IO;
 using System.Reflection;
-using System.Runtime.ExceptionServices;
-using Fody;
-using ILAccess.Fody.Extensions;
-using ILAccess.Fody.Models;
-using ILAccess.Fody.Support;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
-using Mono.Collections.Generic;
+using MoreFodyHelpers.Building;
+using MoreFodyHelpers.Support;
 
-namespace ILAccess.Fody.Processing
+namespace ILAccess.Fody.Processing;
+
+internal sealed class MethodWeaver
 {
-    internal sealed class MethodWeaver
+    private readonly ModuleWeavingContext _context;
+    private readonly MethodDefinition _method;
+    private readonly MethodWeaverLogger _log;
+    private readonly WeaverILProcessor _il;
+    private readonly SequencePointMapper _sequencePoints;
+    private readonly CustomAttribute _anchorAttribute;
+
+    public MethodWeaver(ModuleWeavingContext context, MethodDefinition method, CustomAttribute anchorAttribute, IWeaverLogger log)
     {
-        private const string AnchorMethodDeclaringTypeName = "ILAccess.ObjectExtension";
-        private const string AnchorMethodName = "Base";
+        _context = context;
+        _method = method;
+        _anchorAttribute = anchorAttribute;
+        _il = new WeaverILProcessor(method);
+        _sequencePoints = new SequencePointMapper(method, true);
+        _log = new MethodWeaverLogger(log, _method);
+    }
 
-        private readonly ModuleDefinition _module;
-        private readonly MethodDefinition _method;
-        private readonly MethodWeaverLogger _log;
-        private readonly WeaverILProcessor _il;
-        private readonly References _references;
-        private Collection<Instruction> Instructions => _method.Body.Instructions;
-        private TypeReferences Types => _references.Types;
-        private MethodReferences Methods => _references.Methods;
+    public static bool TryProcess(
+        ModuleWeavingContext context,
+        MethodDefinition method,
+        IWeaverLogger log,
+        [NotNullWhen(true)] out string? assemblyName)
+    {
+        assemblyName = null;
 
-        public MethodWeaver(ModuleDefinition module, MethodDefinition method, ILogger log)
+        var attr = method.CustomAttributes.FirstOrDefault(m => m.AttributeType.FullName == WeaverAnchors.AttributeName);
+        if (attr == null)
+            return false;
+
+        var weaver = new MethodWeaver(context, method, attr, log);
+        return weaver.Process(out assemblyName);
+    }
+
+    private bool Process([NotNullWhen(true)] out string? assemblyName)
+    {
+        try
         {
-            _module = module;
-            _method = method;
-            _il = new WeaverILProcessor(method);
-            _log = new MethodWeaverLogger(log, _method);
-            _references = new References(module);
+            _log.Info($"Processing: {_method.FullName}");
+            return ProcessImpl(out assemblyName);
+        }
+        catch (InstructionWeavingException ex)
+        {
+            throw new WeavingException(_log.QualifyMessage(ex.Message, ex.Instruction))
+            {
+                SequencePoint = _sequencePoints.GetInputSequencePoint(ex.Instruction),
+            };
+        }
+        catch (WeavingException ex)
+        {
+            throw new WeavingException(_log.QualifyMessage(ex.Message))
+            {
+                SequencePoint = ex.SequencePoint,
+            };
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(
+                $"Unexpected error occured while processing method {_method.FullName}: {ex.Message}", ex);
+        }
+        finally
+        {
+            _method.CustomAttributes.RemoveWhere(m => m.AttributeType.FullName == WeaverAnchors.AttributeName);
+        }
+    }
+
+    private bool ProcessImpl([NotNullWhen(true)] out string? assemblyName)
+    {
+        if (_method.Parameters.Count == 0)
+            throw new WeavingException("The method must have at least one parameter to identify the target type.");
+
+        var typeRef = _method.Parameters[0].ParameterType;
+
+        if (typeRef.HasGenericParameters)
+        {
+            var genericType = (GenericInstanceType)typeRef;
+            foreach (var parameter in typeRef.GenericParameters)
+            {
+                genericType.GenericArguments.Add(parameter);
+            }
         }
 
-        public static bool NeedsProcessing(ModuleDefinition module, MethodDefinition method)
-            => HasLibReference(module, method, out _);
+        var type = typeRef.Resolve();
+        var kind = (ILAccessorKind)_anchorAttribute.ConstructorArguments.Single().Value;
+        var name = (string?)_anchorAttribute.Properties.SingleOrDefault().Argument.Value;
+        if (name is null && kind != ILAccessorKind.Constructor)
+            throw new WeavingException($"The property 'Name' should be specific for {kind} on {WeaverAnchors.AttributeName}");
 
-        private static bool HasLibReference(ModuleDefinition module, MethodDefinition method, out Instruction? refInstruction)
+        var isReturnRef = _method.ReturnType.IsByReference;
+        // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+        switch (kind)
         {
-            refInstruction = null;
-
-            if (method.IsWeaverAssemblyReferenced(module))
-                return true;
-
-            if (!method.HasBody)
-                return false;
-
-            if (method.Body.HasVariables && method.Body.Variables.Any(i => i.VariableType.IsWeaverAssemblyReferenced(module)))
-                return true;
-
-            foreach (var instruction in method.Body.Instructions)
+            case ILAccessorKind.Constructor:
+            case ILAccessorKind.Method:
+            case ILAccessorKind.StaticMethod:
             {
-                refInstruction = instruction;
+                var isCtor = kind == ILAccessorKind.Constructor;
+                var isStatic = kind == ILAccessorKind.StaticMethod;
+                var paras = _method.Parameters.Skip(1).Select(p => p.ParameterType).ToArray();
+                var method = _context.FindMethod(type, name, paras, isCtor, isStatic);
 
-                switch (instruction.Operand)
+                var start = isCtor || isStatic ? 1 : 0;
+                for (var i = start; i < _method.Parameters.Count; i++)
                 {
-                    case MethodReference methodRef when methodRef.IsWeaverAssemblyReferenced(module):
-                    case TypeReference typeRef when typeRef.IsWeaverAssemblyReferenced(module):
-                    case FieldReference fieldRef when fieldRef.IsWeaverAssemblyReferenced(module):
-                    case CallSite callSite when callSite.IsWeaverAssemblyReferenced(module):
-                        return true;
+                    _il.IL.Append(_il.IL.Create(OpCodes.Ldarg, i));
                 }
-            }
 
-            refInstruction = null;
+                var callCode = (isCtor, isStatic) switch
+                {
+                    (true, _) => OpCodes.Newobj,
+                    (_, true) => OpCodes.Call,
+                    _ => OpCodes.Callvirt,
+                };
+
+                _il.IL.Append(_il.Create(callCode, _context.Module.ImportReference(method)));
+                _il.IL.Append(_il.Create(OpCodes.Ret));
+
+                assemblyName = method.Module.Assembly.Name.Name;
+                return true;
+            }
+            case ILAccessorKind.Field:
+            case ILAccessorKind.StaticField:
+            {
+                var field = _context.FindField(type, name);
+                var fieldRef = new FieldReference(field.Name, field.FieldType, typeRef);
+
+                if (field.IsStatic)
+                {
+                    var code = isReturnRef
+                        ? OpCodes.Ldsflda
+                        : OpCodes.Ldsfld;
+                    _il.IL.Append(_il.Create(code, fieldRef));
+                }
+                else
+                {
+                    var code = isReturnRef
+                        ? OpCodes.Ldflda
+                        : OpCodes.Ldfld;
+                    _il.IL.Append(_il.Create(OpCodes.Ldarg_0));
+                    _il.IL.Append(_il.Create(code, fieldRef));
+                }
+
+                _il.IL.Append(_il.Create(OpCodes.Ret));
+
+                assemblyName = field.DeclaringType.Module.Assembly.Name.Name;
+                return true;
+            }
+        }
+
+        assemblyName = null;
+        return false;
+    }
+}
+
+file static class Extensions
+{
+    private static string TrimEnd(this string str, string value)
+    {
+        var index = str.LastIndexOf(value, StringComparison.Ordinal);
+        return index >= 0
+            ? str.Substring(0, index)
+            : str;
+    }
+
+    private static readonly string DirectorySeparator = Path.DirectorySeparatorChar.ToString();
+
+    private static bool TryGetImplementationAssemblyPath(string referenceAssemblyPath, [NotNullWhen(true)] out string? implPath)
+    {
+        implPath = null;
+        // C:\Program Files (x86)\dotnet\packs\Microsoft.NETCore.App.Ref\9.0.10\ref\net9.0\System.Collections.Immutable.dll
+        // C:\Program Files (x86)\dotnet\shared\Microsoft.NETCore.App\9.0.10\System.Collections.Immutable.dll
+        const string refSuffix = ".Ref";
+        var sections = referenceAssemblyPath.Split([DirectorySeparator], StringSplitOptions.None);
+        var packsIndex = Array.IndexOf(sections, "packs");
+        if (packsIndex < 0
+            || sections.Length <= packsIndex + 3
+            || sections[packsIndex + 1].EndsWith(refSuffix) == false)
+            return false;
+
+        var newSections = new List<string>(sections.Take(packsIndex))
+        {
+            "shared",
+            sections[packsIndex + 1].TrimEnd(refSuffix), // framework name
+            sections[packsIndex + 2], // version
+            sections.Last() // assembly name
+        };
+        implPath = string.Join(DirectorySeparator, newSections.ToArray());
+        return true;
+    }
+
+    private static bool TryResolveFromImplementationAssembly(this ModuleWeavingContext context, TypeReference typeRef, [NotNullWhen(true)] out TypeDefinition? typeDef)
+    {
+        typeDef = null;
+
+        var assemblyName = typeRef.Module.Assembly.Name.Name;
+        var path = typeRef.Module.FileName;
+
+        if (TryGetImplementationAssemblyPath(path, out var implPath) == false
+            || File.Exists(implPath) == false)
+        {
             return false;
         }
 
-        public void Process()
+        context.Module.AssemblyResolver.UpdateAssemblyResolver(typeRef.Module.Assembly.Name.Name, implPath);
+
+        // use FromAssemblyNameAndTypeName to find type in declared and forwarded types.
+        var tRef = TypeRefBuilder.FromAssemblyNameAndTypeName(context, assemblyName, typeRef.FullName).Build();
+        typeDef = tRef.Resolve();
+        return typeDef != null;
+    }
+
+    private static readonly Type? Type_AssemblyResolver = Type.GetType("AssemblyResolver, FodyIsolated");
+    private static readonly FieldInfo? Field_AssemblyResolver_ReferenceDictionary
+        = Type_AssemblyResolver?.GetField("referenceDictionary", BindingFlags.NonPublic | BindingFlags.Instance);
+
+    private static void UpdateAssemblyResolver(this IAssemblyResolver resolver, string assemblyName, string path)
+    {
+        var type = resolver.GetType();
+        if (type != Type_AssemblyResolver || Field_AssemblyResolver_ReferenceDictionary is not { } field)
+            return;
+
+        var referenceDictionary = (Dictionary<string, string>)field.GetValue(resolver);
+        referenceDictionary[assemblyName] = path;
+
+        // try to add System.Private.CoreLib reference if missing
+        if (referenceDictionary.ContainsKey(AssemblyNames.SystemPrivateCoreLib))
+            return;
+
+        var file = new FileInfo(path);
+        if (file.Directory is not { Exists: true } dir)
+            return;
+
+        var lib = Path.Combine(dir.FullName, AssemblyNames.SystemPrivateCoreLib + ".dll");
+        if (File.Exists(lib) == false)
+            return;
+
+        referenceDictionary[AssemblyNames.SystemPrivateCoreLib] = lib;
+    }
+
+    public static MethodDefinition FindMethod(this ModuleWeavingContext context, TypeDefinition typeDef, string? name, IReadOnlyList<TypeReference> parameterTypes, bool isCtor, bool isStatic)
+    {
+        var methods = GetMethods(typeDef);
+        // ReSharper disable once InvertIf
+        if (methods.Length == 0)
         {
-            try
+            if (context.TryResolveFromImplementationAssembly(typeDef, out var def))
             {
-                ProcessImpl();
-            }
-            catch (InstructionWeavingException ex)
-            {
-                throw new WeavingException(_log.QualifyMessage(ex.Message, ex.Instruction))
-                {
-                    SequencePoint = ex.Instruction.GetInputSequencePoint(_method)
-                };
-            }
-            catch (WeavingException ex)
-            {
-                throw new WeavingException(_log.QualifyMessage(ex.Message))
-                {
-                    SequencePoint = ex.SequencePoint
-                };
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Unexpected error occured while processing method {_method.FullName}: {ex.Message}", ex);
-            }
-        }
-
-        private static bool IsAnchorMethodCall(Instruction instruction)
-        {
-            if (instruction.OpCode != OpCodes.Call
-                || instruction.Operand is not GenericInstanceMethod method)
-                return false;
-
-            return method.DeclaringType.FullName == AnchorMethodDeclaringTypeName
-                   && method.Name == AnchorMethodName;
-        }
-
-        private void ProcessImpl()
-        {
-            var instruction = Instructions.FirstOrDefault();
-            Instruction? nextInstruction;
-
-            for (; instruction != null; instruction = nextInstruction)
-            {
-                nextInstruction = instruction.Next;
-
-                if (!IsAnchorMethodCall(instruction))
-                    continue;
-
-                try
-                {
-                    nextInstruction = ProcessAnchorMethod(instruction);
-                }
-                catch (InstructionWeavingException)
-                {
-                    throw;
-                }
-                catch (WeavingException ex)
-                {
-                    throw new InstructionWeavingException(instruction, _log.QualifyMessage(ex.Message, instruction));
-                }
-                catch (Exception ex)
-                {
-                    throw new InstructionWeavingException(instruction, $"Unexpected error occured while processing method {_method.FullName} at instruction {instruction}: {ex}");
-                }
+                methods = GetMethods(def);
             }
         }
 
-        private Instruction? ProcessAnchorMethod(Instruction instruction)
+        return methods.Length switch
         {
-            var anchorMethod = (GenericInstanceMethod)instruction.Operand;
-            var interfaceTypeRef = anchorMethod.GenericArguments.First();
-            var interfaceTypeDef = interfaceTypeRef.Resolve();
-            if (!interfaceTypeDef.IsInterface)
-                throw new InstructionWeavingException(instruction, "The method Base<T> requires that T is an interface type, but got " + interfaceTypeDef.FullName);
+            0 => throw new WeavingException($"Method '{name}' not found on type '{typeDef.FullName}'."),
+            > 1 => throw new WeavingException($"Multiple methods named '{name}' found on type '{typeDef.FullName}'."),
+            _ => methods[0],
+        };
 
-            var next = instruction.Next;
-            if (next == null)
-                throw NoInterfaceMethodInvocationException();
 
-            if (IsStloc(next))
-                throw NoInterfaceMethodInvocationException();
-
-            if (IsCallAndPop(next) && !IsInterfaceMethodCandidate(next, interfaceTypeRef, interfaceTypeDef))
-            {
-                if (IsAnchorMethodCall(next))
-                    throw new InvalidOperationException("The method Base<T> cannot be invoked followed by another Base<T>");
-                else
-                    throw NoInterfaceMethodInvocationException();
-            }
-
-            for (var p = next; p != null; p = p.Next)
-            {
-                if (!IsInterfaceMethodCandidate(p, interfaceTypeRef, interfaceTypeDef))
-                    continue;
-
-                if (_method.FullName.Contains("OverridedGenericMethodTestCases::GenericMethod_Invoke"))
-                {
-
-                }
-
-                var graph = Instructions.BuildGraph();
-                var args = p.GetArgumentPushInstructions(Instructions, graph);
-                var arg = args.First();
-
-                if (arg != instruction)
-                    continue;
-
-                p = EmitBaseInvokeInstructions(instruction, interfaceTypeRef, interfaceTypeDef, p);
-                return p.Next;
-            }
-
-            throw NoInterfaceMethodInvocationException();
+        MethodDefinition[] GetMethods(TypeDefinition def)
+        {
+            return def.Methods
+                .Where(m => m.IsConstructor == isCtor
+                            && m.IsStatic == isStatic
+                            && (isCtor == false && m.Name == name || isCtor)
+                            && m.Parameters.Select(x => x.ParameterType)
+                                .SequenceEqual(parameterTypes, TypeReferenceEqualityComparer.Instance))
+                .ToArray();
         }
+    }
 
-        private Instruction EmitBaseInvokeInstructions(Instruction anchor, TypeReference typeRef, TypeDefinition interfaceTypeDef, Instruction invokeInstruction)
+    public static FieldDefinition FindField(this ModuleWeavingContext context, TypeDefinition typeDef, string? name)
+    {
+        var fields = GetFields(typeDef);
+        // ReSharper disable once InvertIf
+        if (fields.Length == 0)
         {
-            _il.Remove(anchor);
-
-            var methodRef = (MethodReference)invokeInstruction.Operand;
-
-            if (typeRef.IsEqualTo(methodRef.DeclaringType))
+            if (context.TryResolveFromImplementationAssembly(typeDef, out var def))
             {
-                var methodDef = methodRef.Resolve();
-                EnsureNonAbstract(methodDef);
-
-                invokeInstruction.OpCode = OpCodes.Call;
-                return invokeInstruction;
-            }
-
-            var interfaceDefaultMethod = interfaceTypeDef.GetInterfaceDefaultMethod(methodRef);
-            EnsureNonAbstract(interfaceDefaultMethod);
-
-            var interfaceDefaultMethodRef = (MethodReference)interfaceDefaultMethod;
-            if (methodRef is GenericInstanceMethod { HasGenericArguments: true } genericInstanceMethod)
-            {
-                interfaceDefaultMethodRef = interfaceDefaultMethod.MakeGenericMethod(genericInstanceMethod.GenericArguments);
-            }
-            
-            // we have to use Calli instead of Call to avoid MethodAccessException
-            // we cannot use Ldftn to get the method pointer because of MethodAccessException
-            var handle = _il.Locals.AddLocalVar(new LocalVarBuilder(Types.RuntimeMethodHandle));
-            var ptr = _il.Locals.AddLocalVar(new LocalVarBuilder(Types.IntPtr));
-            var callSite = new StandAloneMethodSigBuilder(CallingConventions.HasThis, interfaceDefaultMethodRef).Build();
-
-            var to64 = _il.Create(OpCodes.Call, Methods.ToInt64);
-            var to32 = _il.Create(OpCodes.Call, Methods.ToInt32);
-            var calli = _il.Create(OpCodes.Calli, callSite);
-
-            var instructions = new List<Instruction>(4)
-            {
-                _il.Create(OpCodes.Ldtoken, interfaceDefaultMethodRef),
-                _il.Create(OpCodes.Stloc, handle),
-                _il.Create(OpCodes.Ldloca, handle),
-                _il.Create(OpCodes.Call, Methods.GetFunctionPointer),
-                _il.Create(OpCodes.Stloc, ptr),
-                _il.Create(OpCodes.Ldloca, ptr),
-                _il.Create(OpCodes.Call, Methods.Is64BitProcess),
-                _il.Create(OpCodes.Brfalse, to32),
-                to64,
-                _il.Create(OpCodes.Br, calli),
-                to32,
-                calli,
-                Instruction.Create(OpCodes.Nop)
-            };
-
-            var cur = _il.InsertAfter(invokeInstruction, instructions);
-            _il.Remove(invokeInstruction);
-            return cur;
-        }
-
-        private static bool IsInterfaceMethodCandidate(Instruction instruction, TypeReference typeRef, TypeDefinition typeDef)
-        {
-            if (instruction.OpCode != OpCodes.Callvirt
-                || instruction.Operand is not MethodReference methodRef)
-                return false;
-
-            var baseTypeRef = methodRef.DeclaringType;
-            if (typeRef.IsEqualTo(baseTypeRef))
-                return true;
-
-            return typeDef.Interfaces.Any(m => m.InterfaceType.IsEqualTo(baseTypeRef));
-        }
-
-        private static bool IsCallAndPop(Instruction instruction)
-        {
-            return instruction.OpCode.FlowControl == FlowControl.Call && instruction.GetPopCount() > 0;
-        }
-
-        private static bool IsStloc(Instruction instruction)
-        {
-            switch (instruction.OpCode.Code)
-            {
-                case Code.Stloc:
-                case Code.Stloc_S:
-                case Code.Stloc_0:
-                case Code.Stloc_1:
-                case Code.Stloc_2:
-                case Code.Stloc_3:
-                    return true;
-                default:
-                    return false;
+                fields = GetFields(def);
             }
         }
 
-        private static Exception NoInterfaceMethodInvocationException()
+        return fields.Length switch
         {
-            return new InvalidOperationException("The method Base<T> requires that an interface methods to be base-invoked with its return value fluently");
-        }
+            0 => throw new WeavingException($"Field '{name}' not found on type '{typeDef.FullName}'."),
+            > 1 => throw new WeavingException($"Multiple fields named '{name}' found on type '{typeDef.FullName}'."),
+            _ => fields[0],
+        };
 
-        private static void EnsureNonAbstract(MethodDefinition method)
+
+        FieldDefinition[] GetFields(TypeDefinition def)
         {
-            if (method.IsAbstract)
-                throw new InvalidOperationException($"The abstract interface method {method.FullName} cannot be invoked");
+            return def.Fields
+                .Where(m => m.Name == name)
+                .ToArray();
         }
     }
 }

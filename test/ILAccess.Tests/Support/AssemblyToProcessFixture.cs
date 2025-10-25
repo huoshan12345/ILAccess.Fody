@@ -1,92 +1,83 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Fody;
-using ILAccess.Fody;
-using ILAccess.Fody.Extensions;
-using ILAccess.Tests.AssemblyToProcess;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
+﻿using MoreFodyHelpers;
 
 #pragma warning disable 618
 
-namespace ILAccess.Tests.Support
+namespace ILAccess.Tests.Support;
+
+public static class AssemblyToProcessFixture
 {
-    public static class AssemblyToProcessFixture
+    public static TestResult TestResult { get; }
+
+    public static ModuleDefinition OriginalModule { get; }
+    public static ModuleDefinition ResultModule { get; }
+
+    static AssemblyToProcessFixture()
     {
-        public static TestResult TestResult { get; }
+        (TestResult, OriginalModule, ResultModule) = Process<AssemblyToProcessReference>();
+    }
 
-        public static ModuleDefinition OriginalModule { get; }
-        public static ModuleDefinition ResultModule { get; }
+    internal static (TestResult testResult, ModuleDefinition originalModule, ModuleDefinition resultModule) Process<T>()
+    {
+        var assemblyPath = FixtureHelper.IsolateAssembly<T>();
 
-        static AssemblyToProcessFixture()
+        var weavingTask = new GuardedWeaver();
+
+        var testResult = weavingTask.ExecuteTestRun(
+            assemblyPath,
+            ignoreCodes:
+            [
+                "0x801312da", // VLDTR_E_MR_VARARGCALLINGCONV
+            ],
+            writeSymbols: true,
+            beforeExecuteCallback: BeforeExecuteCallback,
+            runPeVerify: false
+        );
+
+        using var assemblyResolver = new TestAssemblyResolver();
+
+        var readerParams = new ReaderParameters(ReadingMode.Immediate)
         {
-            (TestResult, OriginalModule, ResultModule) = Process<AssemblyToProcessReference>();
-        }
+            ReadSymbols = true,
+            AssemblyResolver = assemblyResolver
+        };
 
-        internal static (TestResult testResult, ModuleDefinition originalModule, ModuleDefinition resultModule) Process<T>()
+        var originalModule = ModuleDefinition.ReadModule(assemblyPath, readerParams);
+        var resultModule = ModuleDefinition.ReadModule(testResult.AssemblyPath, readerParams);
+
+        return (testResult, originalModule, resultModule);
+    }
+
+    internal static void BeforeExecuteCallback(ModuleDefinition module)
+    {
+        // This reference is added by Fody, it's not supposed to be there
+        module.AssemblyReferences.RemoveWhere(m => m.Name == AssemblyNames.SystemPrivateCoreLib);
+    }
+
+    internal class GuardedWeaver : ModuleWeaver
+    {
+        private readonly List<string> _errors = new();
+
+        public override void Execute()
         {
-            var assemblyPath = FixtureHelper.IsolateAssembly<T>();
-
-            var weavingTask = new GuardedWeaver();
-
-            var testResult = weavingTask.ExecuteTestRun(
-                assemblyPath,
-                ignoreCodes: new[]
-                {
-                    "0x801312da" // VLDTR_E_MR_VARARGCALLINGCONV
-                },
-                writeSymbols: true,
-                beforeExecuteCallback: BeforeExecuteCallback,
-                runPeVerify: false
-            );
-
-            using var assemblyResolver = new TestAssemblyResolver();
-
-            var readerParams = new ReaderParameters(ReadingMode.Immediate)
+            try
             {
-                ReadSymbols = true,
-                AssemblyResolver = assemblyResolver
-            };
-
-            var originalModule = ModuleDefinition.ReadModule(assemblyPath, readerParams);
-            var resultModule = ModuleDefinition.ReadModule(testResult.AssemblyPath, readerParams);
-
-            return (testResult, originalModule, resultModule);
-        }
-
-        internal static void BeforeExecuteCallback(ModuleDefinition module)
-        {
-            // This reference is added by Fody, it's not supposed to be there
-            module.AssemblyReferences.RemoveWhere(i => string.Equals(i.Name, "System.Private.CoreLib", StringComparison.OrdinalIgnoreCase));
-        }
-
-        internal class GuardedWeaver : ModuleWeaver
-        {
-            private readonly List<string> _errors = new();
-
-            public override void Execute()
-            {
-                try
-                {
-                    base.Execute();
-                }
-                catch (Exception ex)
-                {
-                    var str = new StringBuilder();
-                    foreach (var error in _errors)
-                        str.AppendLine(error);
-
-                    str.AppendLine(ex.Message);
-                    throw new InvalidOperationException(str.ToString());
-                }
+                base.Execute();
             }
-
-            protected override void AddError(string message, SequencePoint? sequencePoint)
+            catch (Exception ex)
             {
-                _errors.Add(message);
-                base.AddError(message, sequencePoint);
+                var str = new StringBuilder();
+                foreach (var error in _errors)
+                    str.AppendLine(error);
+
+                str.AppendLine(ex.Message);
+                throw new InvalidOperationException(str.ToString());
             }
+        }
+
+        protected override void AddError(string message, SequencePoint? sequencePoint)
+        {
+            _errors.Add(message);
+            base.AddError(message, sequencePoint);
         }
     }
 }

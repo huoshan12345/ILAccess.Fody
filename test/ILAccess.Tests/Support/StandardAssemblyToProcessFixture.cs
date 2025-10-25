@@ -1,19 +1,17 @@
-using Fody;
 using ILAccess.Tests.StandardAssemblyToProcess;
-using Mono.Cecil;
+using ModuleDefinition = Mono.Cecil.ModuleDefinition;
 
-namespace ILAccess.Tests.Support
+namespace ILAccess.Tests.Support;
+
+public static class StandardAssemblyToProcessFixture
 {
-    public static class StandardAssemblyToProcessFixture
+    public static TestResult TestResult { get; }
+
+    public static ModuleDefinition OriginalModule { get; }
+    public static ModuleDefinition ResultModule { get; }
+
+    static StandardAssemblyToProcessFixture()
     {
-        public static TestResult TestResult { get; }
-
-        public static ModuleDefinition OriginalModule { get; }
-        public static ModuleDefinition ResultModule { get; }
-
-        static StandardAssemblyToProcessFixture()
-        {
-            (TestResult, OriginalModule, ResultModule) = AssemblyToProcessFixture.Process<StandardAssemblyToProcessReference>();
-        }
+        (TestResult, OriginalModule, ResultModule) = AssemblyToProcessFixture.Process<StandardAssemblyToProcessReference>();
     }
 }

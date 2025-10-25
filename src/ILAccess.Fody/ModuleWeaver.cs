@@ -1,48 +1,143 @@
-﻿using Fody;
-using ILAccess.Fody.Processing;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ILAccess.Fody.Support;
-using Mono.Cecil.Cil;
+﻿using System.IO;
+using MoreFodyHelpers.Support;
 
-namespace ILAccess.Fody
+namespace ILAccess.Fody;
+
+public class ModuleWeaver : BaseModuleWeaver
 {
-    public class ModuleWeaver : BaseModuleWeaver
+    private readonly IWeaverLogger _log;
+
+    public ModuleWeaver()
     {
-        private readonly Logger _log;
+        _log = new WeaverLogger(this);
+    }
 
-        public ModuleWeaver()
-        {
-            _log = new Logger(this);
-        }
+    public override void Execute()
+    {
+        using var context = new ModuleWeavingContext(ModuleDefinition, WeaverAnchors.AssemblyName, ProjectDirectoryPath);
 
-        public override void Execute()
+        var emittedAssemblyNames = new HashSet<string>();
+        foreach (var type in ModuleDefinition.GetTypes())
         {
-            foreach (var type in ModuleDefinition.GetTypes())
+            foreach (var method in type.Methods)
             {
-                foreach (var method in type.Methods)
+                try
                 {
-                    try
+                    if (MethodWeaver.TryProcess(context, method, _log, out var assemblyName))
                     {
-                        if (!MethodWeaver.NeedsProcessing(ModuleDefinition, method))
-                            continue;
-
-                        _log.Debug($"Processing: {method.FullName}");
-                        new MethodWeaver(ModuleDefinition, method, _log).Process();
+                        emittedAssemblyNames.Add(assemblyName);
                     }
-                    catch (WeavingException ex)
-                    {
-                        AddError(ex.Message, ex.SequencePoint);
-                    }
+                }
+                catch (WeavingException ex)
+                {
+                    AddError(ex.Message, ex.SequencePoint);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    AddError(ex.Message, method.GetSequencePoint());
+                    break;
                 }
             }
         }
 
-        public override IEnumerable<string> GetAssembliesForScanning() => Enumerable.Empty<string>();
+        foreach (var assemblyName in emittedAssemblyNames)
+        {
+            context.AddIgnoresAccessCheck(assemblyName);
+        }
 
-        protected virtual void AddError(string message, SequencePoint? sequencePoint)
-            => _log.Error(message, sequencePoint);
+        context.RemoveReference(WeaverAnchors.AssemblyName, this);
+        context.RemoveReference(AssemblyNames.SystemPrivateCoreLib, this);
+    }
+
+    public override IEnumerable<string> GetAssembliesForScanning() => [];
+
+    protected virtual void AddError(string message, SequencePoint? sequencePoint)
+        => _log.Error(message, sequencePoint);
+}
+
+file static class Extensions
+{
+    public static TypeDefinition GetOrAddIgnoresAccessChecksToAttribute(this ModuleWeavingContext context)
+    {
+        var module = context.Module;
+        const string ns = "System.Runtime.CompilerServices";
+        const string name = "IgnoresAccessChecksToAttribute";
+        var attr = module.GetType(ns, name);
+        if (attr != null)
+            return attr;
+
+        var attrRef = context.ImportReference<Attribute>();
+        var attrDef = attrRef.Resolve();
+        var type = module.AddType(ns, name, TypeAttributes.Class | TypeAttributes.NotPublic | TypeAttributes.BeforeFieldInit, attrRef);
+        var property = type.AddAutoProperty<string>("AssemblyName", setterAttributes: MethodAttributes.Private);
+        var baseCtor = attrDef.GetConstructor();
+        var ctor = type.AddConstructor(instructions:
+        [
+            Instruction.Create(OpCodes.Call, module.ImportReference(baseCtor)),
+            Instruction.Create(OpCodes.Ldarg_0),
+            Instruction.Create(OpCodes.Ldarg_1),
+            Instruction.Create(OpCodes.Callvirt, property.SetMethod)
+        ]);
+        ctor.AddParameter<string>("assemblyName");
+        return type;
+    }
+
+    public static void AddIgnoresAccessCheck(this ModuleWeavingContext context, string? assemblyName = null)
+    {
+        var attr = context.GetOrAddIgnoresAccessChecksToAttribute();
+        var stringType = context.ImportReference<string>();
+        var ctor = attr.GetConstructor(stringType);
+        var attribute = new CustomAttribute(ctor);
+        var arg = new CustomAttributeArgument(stringType, assemblyName ?? attr.Module.Assembly.Name.Name);
+        attribute.ConstructorArguments.Add(arg);
+        attr.Module.Assembly.CustomAttributes.Add(attribute);
+    }
+
+    public static void RemoveReference(this ModuleWeavingContext context, string assemblyName, BaseModuleWeaver weaver)
+    {
+        var module = context.Module;
+        var libRef = module.AssemblyReferences.FirstOrDefault(m => m?.Name == assemblyName);
+        if (libRef == null)
+            return;
+
+        var importScopes = new HashSet<ImportDebugInformation>();
+
+        foreach (var method in module.GetTypes().SelectMany(t => t.Methods))
+        {
+            foreach (var scope in method.DebugInformation.GetScopes())
+                ProcessScope(scope);
+        }
+
+        module.AssemblyReferences.Remove(libRef);
+
+        var copyLocalFilesToRemove = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            libRef.Name + ".dll",
+            libRef.Name + ".xml",
+            libRef.Name + ".pdb" // We don't ship this, but future-proof that ;)
+        };
+
+        weaver.ReferenceCopyLocalPaths.RemoveAll(i => copyLocalFilesToRemove.Contains(Path.GetFileName(i)));
+
+        void ProcessScope(ScopeDebugInformation scope)
+        {
+            ProcessImportScope(scope.Import);
+
+            if (scope.HasScopes)
+            {
+                foreach (var childScope in scope.Scopes)
+                    ProcessScope(childScope);
+            }
+        }
+
+        void ProcessImportScope(ImportDebugInformation? importScope)
+        {
+            if (importScope == null || !importScopes.Add(importScope))
+                return;
+
+            importScope.Targets.RemoveWhere(t => t.AssemblyReference?.Name == assemblyName || t.Type.IsWeaverReferenced(context));
+            ProcessImportScope(importScope.Parent);
+        }
     }
 }
