@@ -160,13 +160,11 @@ internal sealed class MethodWeaver
         assemblyName = null;
         return false;
     }
-
-
 }
 
 file static class Extensions
 {
-    public static string TrimEnd(this string str, string value)
+    private static string TrimEnd(this string str, string value)
     {
         var index = str.LastIndexOf(value, StringComparison.Ordinal);
         return index >= 0
@@ -204,7 +202,6 @@ file static class Extensions
     {
         typeDef = null;
 
-        var assemblyVersion = typeRef.Module.Assembly.Name.Version;
         var assemblyName = typeRef.Module.Assembly.Name.Name;
         var path = typeRef.Module.FileName;
 
@@ -216,9 +213,8 @@ file static class Extensions
 
         context.Module.AssemblyResolver.UpdateAssemblyResolver(typeRef.Module.Assembly.Name.Name, implPath);
 
-        // var tRef = new TypeReference(typeRef.Namespace, typeRef.Name, context.Module, new AssemblyNameReference(assemblyName, assemblyVersion));
-        // var tRef = TypeRefBuilder.FromAssemblyNameAndTypeName(context, assemblyName, typeRef.FullName).Build();
-        var tRef = FindType(context.Module, assemblyName, typeRef.FullName);
+        // use FromAssemblyNameAndTypeName to find type in declared and forwarded types.
+        var tRef = TypeRefBuilder.FromAssemblyNameAndTypeName(context, assemblyName, typeRef.FullName).Build();
         typeDef = tRef.Resolve();
         return typeDef != null;
     }
@@ -227,7 +223,7 @@ file static class Extensions
     private static readonly FieldInfo? Field_AssemblyResolver_ReferenceDictionary
         = Type_AssemblyResolver?.GetField("referenceDictionary", BindingFlags.NonPublic | BindingFlags.Instance);
 
-    public static void UpdateAssemblyResolver(this IAssemblyResolver resolver, string assemblyName, string path)
+    private static void UpdateAssemblyResolver(this IAssemblyResolver resolver, string assemblyName, string path)
     {
         var type = resolver.GetType();
         if (type != Type_AssemblyResolver || Field_AssemblyResolver_ReferenceDictionary is not { } field)
@@ -236,6 +232,7 @@ file static class Extensions
         var referenceDictionary = (Dictionary<string, string>)field.GetValue(resolver);
         referenceDictionary[assemblyName] = path;
 
+        // try to add System.Private.CoreLib reference if missing
         if (referenceDictionary.ContainsKey(AssemblyNames.SystemPrivateCoreLib))
             return;
 
@@ -308,52 +305,5 @@ file static class Extensions
                 .Where(m => m.Name == name)
                 .ToArray();
         }
-    }
-
-    private static TypeReference FindType(ModuleDefinition module, string assemblyName, string typeName)
-    {
-        var assembly = assemblyName == module.Assembly.Name.Name
-            ? module.Assembly
-            : module.AssemblyResolver.Resolve(new AssemblyNameReference(assemblyName, null));
-
-        if (assembly == null)
-            throw new WeavingException($"Could not resolve assembly '{assemblyName}'");
-
-        var declaredTypeRef = TryFindDeclaredType(assembly, typeName);
-        if (declaredTypeRef != null)
-            return declaredTypeRef;
-
-        var forwardedTypeRef = TryFindForwardedType(assembly, typeName, module);
-        if (forwardedTypeRef != null)
-            return forwardedTypeRef;
-
-        throw new WeavingException($"Could not find type '{typeName}' in assembly '{assemblyName}'");
-    }
-
-    private static TypeReference? TryFindDeclaredType(AssemblyDefinition assembly, string typeName)
-        => assembly.Modules
-            .Select(m => m.GetType(typeName, false) ?? m.GetType(typeName, true))
-            .FirstOrDefault(t => t != null);
-
-    private static TypeReference? TryFindForwardedType(AssemblyDefinition assembly, string typeName, ModuleDefinition targetModule)
-    {
-        var ecmaTypeName = Regex.Replace(typeName, @"\\.|\+", m => m.Length == 1 ? "/" : m.Value.Substring(1), RegexOptions.CultureInvariant);
-
-        foreach (var module in assembly.Modules)
-        {
-            if (!module.HasExportedTypes)
-                continue;
-
-            foreach (var exportedType in module.ExportedTypes)
-            {
-                if (!exportedType.IsForwardedType())
-                    continue;
-
-                if (exportedType.FullName == typeName || exportedType.FullName == ecmaTypeName)
-                    return exportedType.CreateReference(module, targetModule);
-            }
-        }
-
-        return null;
     }
 }

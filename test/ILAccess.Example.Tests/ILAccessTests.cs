@@ -35,7 +35,9 @@ public class ILAccessTests(ITestOutputHelper output)
 #endif
     private const string AssemblyName = ProjectName + AssemblyExtension;
 
-    [Fact]
+    [Fact(
+        Skip = $"set DisableFody for the {ProjectName} first and then run this test"
+        )]
     public void Weave_Test()
     {
         var rootDir = AppContext.BaseDirectory.TakeUntil("test", false);

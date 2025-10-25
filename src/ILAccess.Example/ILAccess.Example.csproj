@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net9.0;net472</TargetFrameworks>
-    <DisableFody>true</DisableFody>
+    <!--<DisableFody>true</DisableFody>-->
   </PropertyGroup>
 
   <ItemGroup>

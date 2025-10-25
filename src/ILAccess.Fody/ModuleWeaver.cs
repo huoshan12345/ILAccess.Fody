@@ -1,4 +1,5 @@
-﻿using MoreFodyHelpers.Support;
+﻿using System.IO;
+using MoreFodyHelpers.Support;
 
 namespace ILAccess.Fody;
 
@@ -44,6 +45,9 @@ public class ModuleWeaver : BaseModuleWeaver
         {
             context.AddIgnoresAccessCheck(assemblyName);
         }
+
+        context.RemoveReference(WeaverAnchors.AssemblyName, this);
+        context.RemoveReference(AssemblyNames.SystemPrivateCoreLib, this);
     }
 
     public override IEnumerable<string> GetAssembliesForScanning() => [];
@@ -88,5 +92,52 @@ file static class Extensions
         var arg = new CustomAttributeArgument(stringType, assemblyName ?? attr.Module.Assembly.Name.Name);
         attribute.ConstructorArguments.Add(arg);
         attr.Module.Assembly.CustomAttributes.Add(attribute);
+    }
+
+    public static void RemoveReference(this ModuleWeavingContext context, string assemblyName, BaseModuleWeaver weaver)
+    {
+        var module = context.Module;
+        var libRef = module.AssemblyReferences.FirstOrDefault(m => m?.Name == assemblyName);
+        if (libRef == null)
+            return;
+
+        var importScopes = new HashSet<ImportDebugInformation>();
+
+        foreach (var method in module.GetTypes().SelectMany(t => t.Methods))
+        {
+            foreach (var scope in method.DebugInformation.GetScopes())
+                ProcessScope(scope);
+        }
+
+        module.AssemblyReferences.Remove(libRef);
+
+        var copyLocalFilesToRemove = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            libRef.Name + ".dll",
+            libRef.Name + ".xml",
+            libRef.Name + ".pdb" // We don't ship this, but future-proof that ;)
+        };
+
+        weaver.ReferenceCopyLocalPaths.RemoveAll(i => copyLocalFilesToRemove.Contains(Path.GetFileName(i)));
+
+        void ProcessScope(ScopeDebugInformation scope)
+        {
+            ProcessImportScope(scope.Import);
+
+            if (scope.HasScopes)
+            {
+                foreach (var childScope in scope.Scopes)
+                    ProcessScope(childScope);
+            }
+        }
+
+        void ProcessImportScope(ImportDebugInformation? importScope)
+        {
+            if (importScope == null || !importScopes.Add(importScope))
+                return;
+
+            importScope.Targets.RemoveWhere(t => t.AssemblyReference?.Name == assemblyName || t.Type.IsWeaverReferenced(context));
+            ProcessImportScope(importScope.Parent);
+        }
     }
 }
