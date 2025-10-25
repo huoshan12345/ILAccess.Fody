@@ -2,15 +2,15 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net9.0;</TargetFrameworks>
+    <!--<DisableFody>true</DisableFody>-->
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fody" Version="6.8.0" PrivateAssets="all" />
+    <PackageReference Include="Fody" Version="6.9.3" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ILAccess.Fody\ILAccess.Fody.csproj" />
     <ProjectReference Include="..\ILAccess\ILAccess.csproj" />
   </ItemGroup>
 
@@ -21,5 +21,10 @@
   <ItemGroup>
     <WeaverFiles Include="..\$(_WeaverName)\bin\$(Configuration)\netstandard2.0\$(_WeaverName).dll" />
   </ItemGroup>
+
+  <!--<Target Name="Show" AfterTargets="Build">
+    <Message Text="IntermediateAssembly: @(IntermediateAssembly)" Importance="high" />
+    <Message Text="ReferencePath: @(ReferencePath)" Importance="high" />
+  </Target>-->
 
 </Project>

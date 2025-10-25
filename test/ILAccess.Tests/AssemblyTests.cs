@@ -1,43 +1,47 @@
-﻿using System;
-using System.IO;
-using System.Reflection.Metadata;
+﻿using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
-using ILAccess.Fody;
-using ILAccess.Tests.Support;
-using Xunit;
+using MoreFodyHelpers;
 
-namespace ILAccess.Tests
+namespace ILAccess.Tests;
+
+public class AssemblyTests
 {
-    public class AssemblyTests
+    [Fact]
+    public void ShouldNotReferenceValueTuple()
     {
-        [Fact]
-        public void should_not_reference_value_tuple()
+        // System.ValueTuple may cause issues in some configurations, avoid using it.
+
+        using var fileStream = File.OpenRead(typeof(ModuleWeaver).Assembly.Location);
+        using var peReader = new PEReader(fileStream);
+        var metadataReader = peReader.GetMetadataReader();
+
+        // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+        foreach (var typeRefHandle in metadataReader.TypeReferences)
         {
-            // System.ValueTuple may cause issues in some configurations, avoid using it.
+            var typeRef = metadataReader.GetTypeReference(typeRefHandle);
 
-            using var fileStream = File.OpenRead(typeof(ModuleWeaver).Assembly.Location);
-            using var peReader = new PEReader(fileStream);
-            var metadataReader = peReader.GetMetadataReader();
+            var typeNamespace = metadataReader.GetString(typeRef.Namespace);
+            if (typeNamespace != typeof(ValueTuple).Namespace)
+                continue;
 
-            foreach (var typeRefHandle in metadataReader.TypeReferences)
-            {
-                var typeRef = metadataReader.GetTypeReference(typeRefHandle);
-
-                var typeNamespace = metadataReader.GetString(typeRef.Namespace);
-                if (typeNamespace != typeof(ValueTuple).Namespace)
-                    continue;
-
-                var typeName = metadataReader.GetString(typeRef.Name);
-                typeName.ShouldNotContain(nameof(ValueTuple));
-            }
+            var typeName = metadataReader.GetString(typeRef.Name);
+            typeName.ShouldNotContain(nameof(ValueTuple));
         }
+    }
 
-        [Fact]
-        public void should_not_add_reference_to_private_core_lib()
+    [Fact]
+    public void ShouldNotAddReferenceToPrivateCoreLib()
+    {
+        var modules = new[]
         {
-            AssemblyToProcessFixture.ResultModule.AssemblyReferences.ShouldNotContain(i => i.Name == "System.Private.CoreLib");
-            StandardAssemblyToProcessFixture.ResultModule.AssemblyReferences.ShouldNotContain(i => i.Name == "System.Private.CoreLib");
-            InvalidAssemblyToProcessFixture.ResultModule.AssemblyReferences.ShouldNotContain(i => i.Name == "System.Private.CoreLib");
+            AssemblyToProcessFixture.ResultModule,
+            StandardAssemblyToProcessFixture.ResultModule,
+            InvalidAssemblyToProcessFixture.ResultModule,
+        };
+
+        foreach (var module in modules)
+        {
+            module.AssemblyReferences.ShouldNotContain(m => m.Name == AssemblyNames.SystemPrivateCoreLib);
         }
     }
 }

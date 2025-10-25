@@ -1,62 +1,64 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
+using System.Text;
 
-namespace ILAccess.Example
+// ReSharper disable UnassignedField.Global
+
+// ReSharper disable UnusedMember.Local
+// ReSharper disable FieldCanBeMadeReadOnly.Local
+// ReSharper disable InconsistentNaming
+// ReSharper disable ConvertToAutoProperty
+// ReSharper disable ArrangeAccessorOwnerBody
+// ReSharper disable UnusedParameter.Local
+// ReSharper disable UnusedMember.Global
+// ReSharper disable UnusedVariable
+#pragma warning disable CS0169 // Field is never used
+#pragma warning disable IDE0044 // Add readonly modifier
+#pragma warning disable IDE0051 // Remove unused private members
+#pragma warning disable IDE0052 // Remove unread private members
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
+#pragma warning disable CA1822 // Mark members as static
+#pragma warning disable IDE0060 // Remove unused parameter
+#pragma warning disable CS0414 // Field is assigned but its value is never used
+#pragma warning disable CA2211 // Non-constant fields should not be visible
+
+namespace ILAccess.Example;
+
+internal class Program
 {
-    public interface IService
+    private static void Main(string[] args)
     {
-        int Property { get; }
-        void Method();
-    }
+        Console.InputEncoding = Encoding.UTF8;
+        Console.OutputEncoding = Encoding.UTF8;
 
-    public interface IService1 : IService
-    {
-        public const string Name = nameof(IService1) + "." + nameof(Method);
-        int IService.Property => 1;
-        void IService.Method() => Console.WriteLine(Name);
-    }
+        var ex = new Exception("xxxxxx");
 
-    public interface IService2 : IService
-    {
-        public const string Name = nameof(IService2) + "." + nameof(Method);
-        int IService.Property => 2;
-        void IService.Method() => Console.WriteLine(Name);
-    }
+        ref var value = ref ex.Message();
+        Console.WriteLine($"_message: {value}");
 
-    public interface IService3
-    {
-        void Method<T>() => Console.WriteLine(typeof(T).Name);
-    }
+        ref var stackTraceString = ref ex.StackTraceString();
+        stackTraceString = new StackTrace().ToString();
+        Console.WriteLine($"StackTrace: {ex.StackTrace}");
+        Console.WriteLine($"GetStackTrace: {ex.GetStackTrace()}");
+        Console.WriteLine($"GetBaseException: {ex.GetBaseException()}");
 
-    public interface IService4<T>
-    {
-        void Method() => Console.WriteLine(typeof(T).Name);
+        Console.Read();
     }
+}
 
-    public class Service : IService1, IService2, IService3, IService4<string>
-    {
-        public void Method() => throw new InvalidOperationException();
-        public int Property => throw new InvalidOperationException();
+public static class Extensions
+{
+    [ILAccessor(ILAccessorKind.Field, Name = "_message")]
+    public static extern ref string Message(this Exception obj);
 
-        public void Invoke()
-        {
-            Console.WriteLine("Start invoking...");
-            this.Base<IService1>().Method();
-            this.Base<IService2>().Method();
-            this.Base<IService3>().Method<int>();
-            this.Base<IService4<string>>().Method();
-            Console.WriteLine(this.Base<IService1>().Property);
-            Console.WriteLine(this.Base<IService2>().Property);
-            Console.WriteLine("End invoking.");
-        }
-    }
+    [ILAccessor(ILAccessorKind.Field, Name = "_stackTraceString")]
+    public static extern ref string StackTraceString(this Exception obj);
 
-    internal class Program
-    {
-        private static void Main(string[] args)
-        {
-            var service = new Service();
-            service.Invoke();
-            Console.Read();
-        }
-    }
+    [ILAccessor(ILAccessorKind.Method, Name = "GetStackTrace")]
+    public static extern string GetStackTrace(this Exception obj);
+
+    [ILAccessor(ILAccessorKind.Method, Name = nameof(Exception.GetBaseException))]
+    public static extern string GetBaseException(this Exception obj);
 }

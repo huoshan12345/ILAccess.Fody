@@ -1,8 +1,7 @@
-﻿namespace ILAccess.Tests.SourceGenerator
+﻿namespace ILAccess.Tests.SourceGenerator;
+
+public class OutputOptions
 {
-    public class OutputOptions
-    {
-        public OutputType Type { get; set; } = OutputType.Context;
-        public string? Folder { get; set; }
-    }
+    public OutputType Type { get; set; } = OutputType.Context;
+    public string? Folder { get; set; }
 }

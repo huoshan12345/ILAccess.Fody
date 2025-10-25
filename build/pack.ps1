@@ -9,6 +9,7 @@ $ver_path = Join-Path $root "pkg.version"
 $ver = Get-Content -Path $ver_path
 $key = $Env:NUGET_APIKEY
 $nuget = "https://api.nuget.org/v3/index.json"
+$isGithubAction = [string]::IsNullOrEmpty($Env:GITHUB_ACTION) -eq $false
 
 if ([string]::IsNullOrEmpty($key)) {
   throw "the api key is empty"
@@ -30,13 +31,22 @@ Write-Output "Packing finished."
 
 $files = Get-ChildItem $pkgPath
 
-Write-Output "Uploading..."
-foreach ($file in $files) {
-  Write-Output "Uploading $($file.Basename)"
-  & dotnet nuget push $file -k $key --source $nuget -t 50 --skip-duplicate
-  if ($Lastexitcode -ne 0) {
-    throw "failed with exit code $LastExitCode"
+if ($isGithubAction) {
+  Write-Output "Uploading..."
+  foreach ($file in $files) {
+    Write-Output "Uploading $($file.Basename)"
+    & dotnet nuget push $file -k $key --source $nuget -t 50 --skip-duplicate
+    if ($Lastexitcode -ne 0) {
+      throw "failed with exit code $LastExitCode"
+    }
   }
+
+  Write-Output "Uploading finished."
+}
+else {
+  $packageName = Split-Path $path -Leaf
+  $packageLocalDir = [io.path]::combine( $env:USERPROFILE, ".nuget", "packages", $packageName.ToLower(), $ver);
+  Remove-Item $packageLocalDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-Write-Output "Uploading finished."
+

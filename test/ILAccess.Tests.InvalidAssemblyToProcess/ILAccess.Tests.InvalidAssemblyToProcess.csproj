@@ -1,14 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <DisableFody>true</DisableFody>
     <IsPackable>false</IsPackable>
     <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectCapability Remove="TestContainer" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="..\ILAccess.Tests.AssemblyToProcess\~TestTypes\*.cs" Link="AssemblyToProcess\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\ILAccess.Tests.AssemblyToProcess\~Extensions\*.cs" Link="AssemblyToProcess\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

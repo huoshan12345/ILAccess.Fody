@@ -1,13 +1,17 @@
 <Project>
-
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <LangVersion>latest</LangVersion>
     <NoWarn>xUnit2013</NoWarn>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <_RootDir>$(MSBuildThisFileDirectory)../</_RootDir>
+    <VSTestLogger>trx%3bLogFileName=$(MSBuildProjectName).trx</VSTestLogger>
+    <VSTestResultsDirectory>$(_RootDir)TestResults/$(Configuration)/$(TargetFramework)</VSTestResultsDirectory>
   </PropertyGroup>
 
 </Project>
