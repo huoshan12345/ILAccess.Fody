@@ -1,9 +1,5 @@
-﻿using System.Collections.Concurrent;
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using MoreFodyHelpers.Building;
 using MoreFodyHelpers.Support;
 
@@ -40,9 +36,6 @@ internal sealed class MethodWeaver
         if (attr == null)
             return false;
 
-        if (method.Body.Instructions.Count > 0)
-            return false; // has been already processed
-
         var weaver = new MethodWeaver(context, method, attr, log);
         return weaver.Process(out assemblyName);
     }
@@ -70,7 +63,12 @@ internal sealed class MethodWeaver
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Unexpected error occured while processing method {_method.FullName}: {ex.Message}", ex);
+            throw new InvalidOperationException(
+                $"Unexpected error occured while processing method {_method.FullName}: {ex.Message}", ex);
+        }
+        finally
+        {
+            _method.CustomAttributes.RemoveWhere(m => m.AttributeType.FullName == WeaverAnchors.AttributeName);
         }
     }
 
@@ -122,10 +120,10 @@ internal sealed class MethodWeaver
                     _ => OpCodes.Callvirt,
                 };
 
-                _il.IL.Append(_il.Create(callCode, method));
+                _il.IL.Append(_il.Create(callCode, _context.Module.ImportReference(method)));
                 _il.IL.Append(_il.Create(OpCodes.Ret));
 
-                assemblyName = method.DeclaringType.Module.Assembly.Name.Name;
+                assemblyName = method.Module.Assembly.Name.Name;
                 return true;
             }
             case ILAccessorKind.Field:

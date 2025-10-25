@@ -36,7 +36,7 @@ public class ILAccessTests(ITestOutputHelper output)
     private const string AssemblyName = ProjectName + AssemblyExtension;
 
     [Fact(
-        Skip = $"set DisableFody for the {ProjectName} first and then run this test"
+        // Skip = $"set DisableFody for the {ProjectName} first and then run this test"
         )]
     public void Weave_Test()
     {
@@ -46,8 +46,8 @@ public class ILAccessTests(ITestOutputHelper output)
         var assemblyPath = Path.Combine(AppContext.BaseDirectory, AssemblyName);
         var weaver = Path.Combine(AppContext.BaseDirectory, "ILAccess.Fody.dll");
 
-        var assemblyBytes = File.ReadAllBytes(assemblyPath);
-        var assembly = Assembly.Load(assemblyBytes);
+        //var assemblyBytes = File.ReadAllBytes(assemblyPath);
+        //var assembly = Assembly.Load(assemblyBytes);
         // var refs = assembly.GetAllReferenceAssemblies().Select(m => m.Location).OrderBy(m => m).ToArray();
 
         var refsFromText = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "refs.txt"))
@@ -55,6 +55,7 @@ public class ILAccessTests(ITestOutputHelper output)
             .OrderBy(m => m)
             .ToArray();
 
+        var engine = new FakeBuildEngine();
         var task = new WeavingTask
         {
             AssemblyFile = assemblyPath,
@@ -79,11 +80,11 @@ public class ILAccessTests(ITestOutputHelper output)
             RuntimeCopyLocalFilesCache = Path.Combine(AppContext.BaseDirectory, $"{ProjectName}.Fody.RuntimeCopyLocal.cache"),
             GenerateXsd = false,
             TreatWarningsAsErrors = false,
-            BuildEngine = new FakeBuildEngine(),
+            BuildEngine = engine,
         };
 
         var result = task.Execute();
-        Assert.True(result);
+        Assert.True(result, engine.LogErrorEvents.FirstOrDefault()?.Message);
     }
 }
 

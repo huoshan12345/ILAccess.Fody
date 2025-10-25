@@ -46,8 +46,8 @@ public class ModuleWeaver : BaseModuleWeaver
             context.AddIgnoresAccessCheck(assemblyName);
         }
 
-        context.RemoveReference(WeaverAnchors.AssemblyName, this);
-        context.RemoveReference(AssemblyNames.SystemPrivateCoreLib, this);
+        //context.RemoveReference(WeaverAnchors.AssemblyName, this);
+        //context.RemoveReference(AssemblyNames.SystemPrivateCoreLib, this);
     }
 
     public override IEnumerable<string> GetAssembliesForScanning() => [];

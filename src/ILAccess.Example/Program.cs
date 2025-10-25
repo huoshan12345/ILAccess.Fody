@@ -1,6 +1,9 @@
 ﻿using System;
-using System.Reflection;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
+using System.Text;
+
 // ReSharper disable UnassignedField.Global
 
 // ReSharper disable UnusedMember.Local
@@ -27,9 +30,19 @@ internal class Program
 {
     private static void Main(string[] args)
     {
+        Console.InputEncoding = Encoding.UTF8;
+        Console.OutputEncoding = Encoding.UTF8;
+
         var ex = new Exception("xxxxxx");
+
         ref var value = ref ex.Message();
-        Console.WriteLine($"Original value: {value}");
+        Console.WriteLine($"_message: {value}");
+
+        ref var stackTraceString = ref ex.StackTraceString();
+        stackTraceString = new StackTrace().ToString();
+        Console.WriteLine($"StackTrace: {ex.StackTrace}");
+        Console.WriteLine($"GetStackTrace: {ex.GetStackTrace()}");
+        Console.WriteLine($"GetBaseException: {ex.GetBaseException()}");
 
         Console.Read();
     }
@@ -39,4 +52,13 @@ public static class Extensions
 {
     [ILAccessor(ILAccessorKind.Field, Name = "_message")]
     public static extern ref string Message(this Exception obj);
+
+    [ILAccessor(ILAccessorKind.Field, Name = "_stackTraceString")]
+    public static extern ref string StackTraceString(this Exception obj);
+
+    [ILAccessor(ILAccessorKind.Method, Name = "GetStackTrace")]
+    public static extern string GetStackTrace(this Exception obj);
+
+    [ILAccessor(ILAccessorKind.Method, Name = nameof(Exception.GetBaseException))]
+    public static extern string GetBaseException(this Exception obj);
 }
