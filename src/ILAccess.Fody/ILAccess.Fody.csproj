@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\ILAccess\ILAccessorAttribute.cs">
-      <Link>ILAccessorAttribute.cs</Link>
+    <Compile Include="..\ILAccess\ILAccessorKind.cs">
+      <Link>ILAccessorKind.cs</Link>
     </Compile>
   </ItemGroup>
 
