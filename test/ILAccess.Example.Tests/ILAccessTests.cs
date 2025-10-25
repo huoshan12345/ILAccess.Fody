@@ -6,7 +6,6 @@ using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Xunit;
 using Xunit.Abstractions;
-using static System.StringSplitOptions;
 
 namespace ILAccess.Example.Tests;
 
@@ -26,22 +25,31 @@ public static class Extensions
 
 public class ILAccessTests(ITestOutputHelper output)
 {
+    private const string ProjectName = "ILAccess.Example";
+
+    private const string AssemblyExtension =
+#if NETFRAMEWORK
+         ".exe";
+#else
+         ".dll";
+#endif
+    private const string AssemblyName = ProjectName + AssemblyExtension;
+
     [Fact]
     public void Weave_Test()
     {
-        const string projectName = "ILAccess.Example";
         var rootDir = AppContext.BaseDirectory.TakeUntil("test", false);
-        var projectDir = Path.Combine(rootDir, "src", projectName);
-        var projectFile = Path.Combine(projectDir, $"{projectName}.csproj");
-        var assemblyPath = Path.Combine(AppContext.BaseDirectory, $"{projectName}.dll");
+        var projectDir = Path.Combine(rootDir, "src", ProjectName);
+        var projectFile = Path.Combine(projectDir, $"{ProjectName}.csproj");
+        var assemblyPath = Path.Combine(AppContext.BaseDirectory, AssemblyName);
         var weaver = Path.Combine(AppContext.BaseDirectory, "ILAccess.Fody.dll");
 
         var assemblyBytes = File.ReadAllBytes(assemblyPath);
         var assembly = Assembly.Load(assemblyBytes);
-        var refs = assembly.GetAllReferenceAssemblies().Select(m => m.Location).OrderBy(m => m).ToArray();
+        // var refs = assembly.GetAllReferenceAssemblies().Select(m => m.Location).OrderBy(m => m).ToArray();
 
         var refsFromText = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "refs.txt"))
-            .SplitToLines(RemoveEmptyEntries | TrimEntries)
+            .SplitToLines()
             .OrderBy(m => m)
             .ToArray();
 
@@ -65,8 +73,8 @@ public class ILAccessTests(ITestOutputHelper output)
             NCrunchOriginalSolutionDirectory = null,
             SolutionDirectory = rootDir,
             DefineConstants = null,
-            IntermediateCopyLocalFilesCache = Path.Combine(AppContext.BaseDirectory, $"{projectName}.Fody.CopyLocal.cache"),
-            RuntimeCopyLocalFilesCache = Path.Combine(AppContext.BaseDirectory, $"{projectName}.Fody.RuntimeCopyLocal.cache"),
+            IntermediateCopyLocalFilesCache = Path.Combine(AppContext.BaseDirectory, $"{ProjectName}.Fody.CopyLocal.cache"),
+            RuntimeCopyLocalFilesCache = Path.Combine(AppContext.BaseDirectory, $"{ProjectName}.Fody.RuntimeCopyLocal.cache"),
             GenerateXsd = false,
             TreatWarningsAsErrors = false,
             BuildEngine = new FakeBuildEngine(),

@@ -1,10 +1,16 @@
-﻿using MoreFodyHelpers.Support;
+﻿using System.Collections.Concurrent;
+using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
+using MoreFodyHelpers.Building;
+using MoreFodyHelpers.Support;
 
 namespace ILAccess.Fody.Processing;
 
 internal sealed class MethodWeaver
 {
-    private readonly ModuleDefinition _module;
     private readonly ModuleWeavingContext _context;
     private readonly MethodDefinition _method;
     private readonly MethodWeaverLogger _log;
@@ -12,10 +18,9 @@ internal sealed class MethodWeaver
     private readonly SequencePointMapper _sequencePoints;
     private readonly CustomAttribute _anchorAttribute;
 
-    public MethodWeaver(ModuleWeavingContext context, ModuleDefinition module, MethodDefinition method, CustomAttribute anchorAttribute, IWeaverLogger log)
+    public MethodWeaver(ModuleWeavingContext context, MethodDefinition method, CustomAttribute anchorAttribute, IWeaverLogger log)
     {
         _context = context;
-        _module = module;
         _method = method;
         _anchorAttribute = anchorAttribute;
         _il = new WeaverILProcessor(method);
@@ -25,19 +30,20 @@ internal sealed class MethodWeaver
 
     public static bool TryProcess(
         ModuleWeavingContext context,
-        ModuleDefinition module,
         MethodDefinition method,
         IWeaverLogger log,
         [NotNullWhen(true)] out string? assemblyName)
     {
+        assemblyName = null;
+
         var attr = method.CustomAttributes.FirstOrDefault(m => m.AttributeType.FullName == WeaverAnchors.AttributeName);
         if (attr == null)
-        {
-            assemblyName = null;
             return false;
-        }
 
-        var weaver = new MethodWeaver(context, module, method, attr, log);
+        if (method.Body.Instructions.Count > 0)
+            return false; // has been already processed
+
+        var weaver = new MethodWeaver(context, method, attr, log);
         return weaver.Process(out assemblyName);
     }
 
@@ -84,7 +90,7 @@ internal sealed class MethodWeaver
             }
         }
 
-        var type = typeRef.ResolveRequiredType(_context);
+        var type = typeRef.Resolve();
         var kind = (ILAccessorKind)_anchorAttribute.ConstructorArguments.Single().Value;
         var name = (string?)_anchorAttribute.Properties.SingleOrDefault().Argument.Value;
         if (name is null && kind != ILAccessorKind.Constructor)
@@ -100,7 +106,8 @@ internal sealed class MethodWeaver
             {
                 var isCtor = kind == ILAccessorKind.Constructor;
                 var isStatic = kind == ILAccessorKind.StaticMethod;
-                var method = FindMethod();
+                var paras = _method.Parameters.Skip(1).Select(p => p.ParameterType).ToArray();
+                var method = _context.FindMethod(type, name, paras, isCtor, isStatic);
 
                 var start = isCtor || isStatic ? 1 : 0;
                 for (var i = start; i < _method.Parameters.Count; i++)
@@ -120,36 +127,11 @@ internal sealed class MethodWeaver
 
                 assemblyName = method.DeclaringType.Module.Assembly.Name.Name;
                 return true;
-
-                MethodDefinition FindMethod()
-                {
-                    var paras = _method.Parameters.Skip(1).Select(p => p.ParameterType).ToArray();
-                    var methods = type.Methods.Where(m => m.IsConstructor == isCtor
-                                                                  && m.IsStatic == isStatic
-                                                                  && m.Parameters.Select(x => x.ParameterType)
-                                                                      .SequenceEqual(paras, TypeReferenceEqualityComparer.Instance))
-                        .ToArray();
-
-                    return methods.Length switch
-                    {
-                        0 => throw new WeavingException($"Method '{name}' not found on type '{type.FullName}' with specified parameters."),
-                        > 1 => throw new WeavingException($"Multiple methods named '{name}' found on type '{type.FullName}' with specified parameters."),
-                        _ => methods[0],
-                    };
-                }
             }
             case ILAccessorKind.Field:
             case ILAccessorKind.StaticField:
             {
-                var fields = type.Fields.Where(f => f.Name == name).ToArray();
-
-                switch (fields.Length)
-                {
-                    case 0: throw new WeavingException($"Field '{name}' not found on type '{type.FullName}'.");
-                    case > 1: throw new WeavingException($"Multiple fields named '{name}' found on type '{type.FullName}'.");
-                }
-
-                var field = fields[0];
+                var field = _context.FindField(type, name);
                 var fieldRef = new FieldReference(field.Name, field.FieldType, typeRef);
 
                 if (field.IsStatic)
@@ -177,5 +159,201 @@ internal sealed class MethodWeaver
 
         assemblyName = null;
         return false;
+    }
+
+
+}
+
+file static class Extensions
+{
+    public static string TrimEnd(this string str, string value)
+    {
+        var index = str.LastIndexOf(value, StringComparison.Ordinal);
+        return index >= 0
+            ? str.Substring(0, index)
+            : str;
+    }
+
+    private static readonly string DirectorySeparator = Path.DirectorySeparatorChar.ToString();
+
+    private static bool TryGetImplementationAssemblyPath(string referenceAssemblyPath, [NotNullWhen(true)] out string? implPath)
+    {
+        implPath = null;
+        // C:\Program Files (x86)\dotnet\packs\Microsoft.NETCore.App.Ref\9.0.10\ref\net9.0\System.Collections.Immutable.dll
+        // C:\Program Files (x86)\dotnet\shared\Microsoft.NETCore.App\9.0.10\System.Collections.Immutable.dll
+        const string refSuffix = ".Ref";
+        var sections = referenceAssemblyPath.Split([DirectorySeparator], StringSplitOptions.None);
+        var packsIndex = Array.IndexOf(sections, "packs");
+        if (packsIndex < 0
+            || sections.Length <= packsIndex + 3
+            || sections[packsIndex + 1].EndsWith(refSuffix) == false)
+            return false;
+
+        var newSections = new List<string>(sections.Take(packsIndex))
+        {
+            "shared",
+            sections[packsIndex + 1].TrimEnd(refSuffix), // framework name
+            sections[packsIndex + 2], // version
+            sections.Last() // assembly name
+        };
+        implPath = string.Join(DirectorySeparator, newSections.ToArray());
+        return true;
+    }
+
+    private static bool TryResolveFromImplementationAssembly(this ModuleWeavingContext context, TypeReference typeRef, [NotNullWhen(true)] out TypeDefinition? typeDef)
+    {
+        typeDef = null;
+
+        var assemblyVersion = typeRef.Module.Assembly.Name.Version;
+        var assemblyName = typeRef.Module.Assembly.Name.Name;
+        var path = typeRef.Module.FileName;
+
+        if (TryGetImplementationAssemblyPath(path, out var implPath) == false
+            || File.Exists(implPath) == false)
+        {
+            return false;
+        }
+
+        context.Module.AssemblyResolver.UpdateAssemblyResolver(typeRef.Module.Assembly.Name.Name, implPath);
+
+        // var tRef = new TypeReference(typeRef.Namespace, typeRef.Name, context.Module, new AssemblyNameReference(assemblyName, assemblyVersion));
+        // var tRef = TypeRefBuilder.FromAssemblyNameAndTypeName(context, assemblyName, typeRef.FullName).Build();
+        var tRef = FindType(context.Module, assemblyName, typeRef.FullName);
+        typeDef = tRef.Resolve();
+        return typeDef != null;
+    }
+
+    private static readonly Type? Type_AssemblyResolver = Type.GetType("AssemblyResolver, FodyIsolated");
+    private static readonly FieldInfo? Field_AssemblyResolver_ReferenceDictionary
+        = Type_AssemblyResolver?.GetField("referenceDictionary", BindingFlags.NonPublic | BindingFlags.Instance);
+
+    public static void UpdateAssemblyResolver(this IAssemblyResolver resolver, string assemblyName, string path)
+    {
+        var type = resolver.GetType();
+        if (type != Type_AssemblyResolver || Field_AssemblyResolver_ReferenceDictionary is not { } field)
+            return;
+
+        var referenceDictionary = (Dictionary<string, string>)field.GetValue(resolver);
+        referenceDictionary[assemblyName] = path;
+
+        if (referenceDictionary.ContainsKey(AssemblyNames.SystemPrivateCoreLib))
+            return;
+
+        var file = new FileInfo(path);
+        if (file.Directory is not { Exists: true } dir)
+            return;
+
+        var lib = Path.Combine(dir.FullName, AssemblyNames.SystemPrivateCoreLib + ".dll");
+        if (File.Exists(lib) == false)
+            return;
+
+        referenceDictionary[AssemblyNames.SystemPrivateCoreLib] = lib;
+    }
+
+    public static MethodDefinition FindMethod(this ModuleWeavingContext context, TypeDefinition typeDef, string? name, IReadOnlyList<TypeReference> parameterTypes, bool isCtor, bool isStatic)
+    {
+        var methods = GetMethods(typeDef);
+        // ReSharper disable once InvertIf
+        if (methods.Length == 0)
+        {
+            if (context.TryResolveFromImplementationAssembly(typeDef, out var def))
+            {
+                methods = GetMethods(def);
+            }
+        }
+
+        return methods.Length switch
+        {
+            0 => throw new WeavingException($"Method '{name}' not found on type '{typeDef.FullName}'."),
+            > 1 => throw new WeavingException($"Multiple methods named '{name}' found on type '{typeDef.FullName}'."),
+            _ => methods[0],
+        };
+
+
+        MethodDefinition[] GetMethods(TypeDefinition def)
+        {
+            return def.Methods
+                .Where(m => m.IsConstructor == isCtor
+                            && m.IsStatic == isStatic
+                            && (isCtor == false && m.Name == name || isCtor)
+                            && m.Parameters.Select(x => x.ParameterType)
+                                .SequenceEqual(parameterTypes, TypeReferenceEqualityComparer.Instance))
+                .ToArray();
+        }
+    }
+
+    public static FieldDefinition FindField(this ModuleWeavingContext context, TypeDefinition typeDef, string? name)
+    {
+        var fields = GetFields(typeDef);
+        // ReSharper disable once InvertIf
+        if (fields.Length == 0)
+        {
+            if (context.TryResolveFromImplementationAssembly(typeDef, out var def))
+            {
+                fields = GetFields(def);
+            }
+        }
+
+        return fields.Length switch
+        {
+            0 => throw new WeavingException($"Field '{name}' not found on type '{typeDef.FullName}'."),
+            > 1 => throw new WeavingException($"Multiple fields named '{name}' found on type '{typeDef.FullName}'."),
+            _ => fields[0],
+        };
+
+
+        FieldDefinition[] GetFields(TypeDefinition def)
+        {
+            return def.Fields
+                .Where(m => m.Name == name)
+                .ToArray();
+        }
+    }
+
+    private static TypeReference FindType(ModuleDefinition module, string assemblyName, string typeName)
+    {
+        var assembly = assemblyName == module.Assembly.Name.Name
+            ? module.Assembly
+            : module.AssemblyResolver.Resolve(new AssemblyNameReference(assemblyName, null));
+
+        if (assembly == null)
+            throw new WeavingException($"Could not resolve assembly '{assemblyName}'");
+
+        var declaredTypeRef = TryFindDeclaredType(assembly, typeName);
+        if (declaredTypeRef != null)
+            return declaredTypeRef;
+
+        var forwardedTypeRef = TryFindForwardedType(assembly, typeName, module);
+        if (forwardedTypeRef != null)
+            return forwardedTypeRef;
+
+        throw new WeavingException($"Could not find type '{typeName}' in assembly '{assemblyName}'");
+    }
+
+    private static TypeReference? TryFindDeclaredType(AssemblyDefinition assembly, string typeName)
+        => assembly.Modules
+            .Select(m => m.GetType(typeName, false) ?? m.GetType(typeName, true))
+            .FirstOrDefault(t => t != null);
+
+    private static TypeReference? TryFindForwardedType(AssemblyDefinition assembly, string typeName, ModuleDefinition targetModule)
+    {
+        var ecmaTypeName = Regex.Replace(typeName, @"\\.|\+", m => m.Length == 1 ? "/" : m.Value.Substring(1), RegexOptions.CultureInvariant);
+
+        foreach (var module in assembly.Modules)
+        {
+            if (!module.HasExportedTypes)
+                continue;
+
+            foreach (var exportedType in module.ExportedTypes)
+            {
+                if (!exportedType.IsForwardedType())
+                    continue;
+
+                if (exportedType.FullName == typeName || exportedType.FullName == ecmaTypeName)
+                    return exportedType.CreateReference(module, targetModule);
+            }
+        }
+
+        return null;
     }
 }

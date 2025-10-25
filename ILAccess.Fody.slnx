@@ -15,13 +15,8 @@
     <File Path="README.md" />
   </Folder>
   <Folder Name="/example/">
-    <Project Path="../../../../projects-origin/Fody/Fody/cecil/Mono.Cecil.csproj" />
-    <Project Path="../../../../projects-origin/Fody/Fody/FodyIsolated/FodyIsolated.csproj" />
-    <Project Path="../../../../projects-origin/Fody/Fody/FodyTasks/FodyTasks.csproj" />
     <Project Path="src/ILAccess.Example/ILAccess.Example.csproj" />
-    <Project Path="test/ILAccess.Example.Tests/ILAccess.Example.Tests.csproj" Id="687d5ff8-d3ce-4141-ad30-c76aaeb30edf">
-      <BuildDependency Project="src/ILAccess.Example/ILAccess.Example.csproj" />
-    </Project>
+    <Project Path="test/ILAccess.Example.Tests/ILAccess.Example.Tests.csproj" />
   </Folder>
   <Folder Name="/src/">
     <File Path="src/Directory.Build.props" />
