@@ -33,9 +33,7 @@ public class ILAccessTests(ITestOutputHelper output)
         }
     }
 
-    [Fact(
-        // Skip = $"set DisableFody for the {ProjectName} first and then run this test"
-    )]
+    [Fact]
     public void Weave_Test()
     {
         var rootDir = AppContext.BaseDirectory.TakeUntil("test", false);
