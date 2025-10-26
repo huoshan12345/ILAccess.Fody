@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net9.0;</TargetFrameworks>
+    <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
     <!--<DisableFody>true</DisableFody>-->
   </PropertyGroup>
 
@@ -22,9 +23,8 @@
     <WeaverFiles Include="..\$(_WeaverName)\bin\$(Configuration)\netstandard2.0\$(_WeaverName).dll" />
   </ItemGroup>
 
-  <!--<Target Name="Show" AfterTargets="Build">
-    <Message Text="IntermediateAssembly: @(IntermediateAssembly)" Importance="high" />
+  <Target Name="Show" AfterTargets="Build">
     <Message Text="ReferencePath: @(ReferencePath)" Importance="high" />
-  </Target>-->
+  </Target>
 
 </Project>

@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FclEx.Core" Version="1.8.8" />
     <PackageReference Include="Microsoft.Build.Framework" Version="17.14.28" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
@@ -31,12 +30,6 @@
     <Reference Include="FodyTasks">
       <HintPath>lib\FodyTasks.dll</HintPath>
     </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="refs.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
   <ItemGroup>
