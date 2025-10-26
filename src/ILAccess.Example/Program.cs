@@ -3,9 +3,8 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Text;
-
+// ReSharper disable ConvertToConstant.Local
 // ReSharper disable UnassignedField.Global
-
 // ReSharper disable UnusedMember.Local
 // ReSharper disable FieldCanBeMadeReadOnly.Local
 // ReSharper disable InconsistentNaming
@@ -26,29 +25,65 @@ using System.Text;
 
 namespace ILAccess.Example;
 
+public class TestModel
+{
+    private static int _staticValue = 42;
+    private int _value;
+    private TestModel(int value) => _value = value;
+    private string GetMessage(int code)
+        => $"Current value: {_value}, code: {code}";
+    private static string GetStaticMessage(int code)
+        => $"Current static value: {_staticValue}, code: {code}";
+}
+
+public static class Accessors
+{
+    [ILAccessor(ILAccessorKind.Field, Name = "_value")]
+    public static extern ref int Value(TestModel instance);
+
+    [ILAccessor(ILAccessorKind.Field, Name = "_staticValue")]
+    public static extern ref int StaticValue(TestModel instance);
+
+    [ILAccessor(ILAccessorKind.Method, Name = "GetMessage")]
+    public static extern string GetMessage(TestModel instance, int code);
+
+    [ILAccessor(ILAccessorKind.StaticMethod, Name = "GetStaticMessage")]
+    public static extern string GetStaticMessage(TestModel? instance, int code);
+
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern TestModel NewTestModel(int x);
+}
+
 internal class Program
 {
     private static void Main(string[] args)
     {
-        Console.InputEncoding = Encoding.UTF8;
-        Console.OutputEncoding = Encoding.UTF8;
+        var model = Accessors.NewTestModel(100);
+        ref var value = ref Accessors.Value(model);
+        Console.WriteLine($"_value: {value}");
 
-        var ex = new Exception("xxxxxx");
+        value += 50;
+        Console.WriteLine($"_value updated: {value}");
 
-        ref var value = ref ex.Message();
-        Console.WriteLine($"_message: {value}");
+        ref var staticValue = ref Accessors.StaticValue(model);
+        Console.WriteLine($"_staticValue: {staticValue}");
+        staticValue += 10;
+        Console.WriteLine($"_staticValue updated: {staticValue}");
 
-        ref var stackTraceString = ref ex.StackTraceString();
-        stackTraceString = new StackTrace().ToString();
-        Console.WriteLine($"StackTrace: {ex.StackTrace}");
-        Console.WriteLine($"GetStackTrace: {ex.GetStackTrace()}");
-        Console.WriteLine($"GetBaseException: {ex.GetBaseException()}");
+        var message = Accessors.GetMessage(model, 7);
+        Console.WriteLine($"GetMessage: {message}");
+
+        var staticMessage = Accessors.GetStaticMessage(null, 7);
+        Console.WriteLine($"GetStaticMessage: {message}");
+
+        Console.WriteLine();
+        ExceptionAccessors.Test();
 
         Console.Read();
     }
 }
 
-public static class Extensions
+public static class ExceptionAccessors
 {
     [ILAccessor(ILAccessorKind.Field, Name = "_message")]
     public static extern ref string Message(this Exception obj);
@@ -61,4 +96,18 @@ public static class Extensions
 
     [ILAccessor(ILAccessorKind.Method, Name = nameof(Exception.GetBaseException))]
     public static extern string GetBaseException(this Exception obj);
+
+    public static void Test()
+    {
+        var ex = new Exception("xxxxxx");
+
+        ref var value = ref ex.Message();
+        Console.WriteLine($"_message: {value}");
+
+        ref var stackTraceString = ref ex.StackTraceString();
+        stackTraceString = new StackTrace().ToString();
+        Console.WriteLine($"StackTrace: {ex.StackTrace}");
+        Console.WriteLine($"GetStackTrace: {ex.GetStackTrace()}");
+        Console.WriteLine($"GetBaseException: {ex.GetBaseException()}");
+    }
 }
