@@ -6,7 +6,7 @@
 
 ## ✨ Overview
 
-`ILAccess.Fody` provides functionality similar to .NET 8's `UnsafeAccessor`, but works on older .NET platforms. It is a [Fody](https://github.com/Fody/Fody) weaver that injects IL at compile-time, enabling access to private or internal members without runtime reflection. This results in faster access and compile-time safety compared to traditional reflection-based approaches.
+`ILAccess.Fody` provides functionality similar to the [UnsafeAccessor](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.unsafeaccessorattribute?view=net-8.0) introduced in .NET 8, but supports older .NET platforms. It is a [Fody](https://github.com/Fody/Fody) weaver that injects IL at compile-time, enabling access to private or internal members without runtime reflection. This results in faster access and compile-time safety compared to traditional reflection-based approaches.
 
 ---
 
@@ -32,83 +32,61 @@ See [Fody usage](https://github.com/Fody/Home/blob/master/pages/usage.md) for ge
 
 ## 🧩 Usage Example
 
-You can use `ILAccessor` to access private fields, methods, or constructors — similar to `UnsafeAccessor` in .NET 8.
-
-### Example: Access Private Field
+You can use `ILAccessor` to access private fields, methods, or constructors — similar to `UnsafeAccessor` since .NET 8.
 
 ```csharp
-using System;
-using ILAccess;
-
-class Example
+public class TestModel
 {
-    private int _value = 42;
+    private static int _staticValue = 42;
+    private int _value;
+    private TestModel(int value) => _value = value;
+    private string GetMessage(int code) 
+        => $"Current value: {_value}, code: {code}";
+    private static string GetStaticMessage(int code) 
+        => $"Current static value: {_staticValue}, code: {code}";
 }
 
-static class Accessors
+public static class Accessors
 {
     [ILAccessor(ILAccessorKind.Field, Name = "_value")]
-    public static partial ref int GetValue(Example instance);
-}
+    public static extern ref int Value(TestModel instance);
 
-class Program
-{
-    static void Main()
-    {
-        var obj = new Example();
-        ref int valueRef = ref Accessors.GetValue(obj);
-        Console.WriteLine(valueRef);  // 42
-        valueRef = 99;
-        Console.WriteLine(Accessors.GetValue(obj));  // 99
-    }
-}
-```
+    [ILAccessor(ILAccessorKind.Field, Name = "_staticValue")]
+    public static extern ref int StaticValue(TestModel instance);
 
-### Example: Access Private Method
+    [ILAccessor(ILAccessorKind.Method, Name = "GetMessage")]
+    public static extern string GetMessage(TestModel instance, int code);
 
-```csharp
-class Example
-{
-    private string GetSecretMessage(int code) => $"Secret #{code}";
-}
+    [ILAccessor(ILAccessorKind.StaticMethod, Name = "GetStaticMessage")]
+    public static extern string GetStaticMessage(TestModel? instance, int code);
 
-static class Accessors
-{
-    [ILAccessor(ILAccessorKind.Method, Name = "GetSecretMessage")]
-    public static partial string GetSecretMessage(Example instance, int code);
-}
-
-class Program
-{
-    static void Main()
-    {
-        var obj = new Example();
-        Console.WriteLine(Accessors.GetSecretMessage(obj, 7)); // Secret #7
-    }
-}
-```
-
-### Example: Access Constructor
-
-```csharp
-class Example
-{
-    private Example(int x) { Value = x; }
-    public int Value { get; }
-}
-
-static class Accessors
-{
     [ILAccessor(ILAccessorKind.Constructor)]
-    public static partial Example Create(int x);
+    public static extern TestModel NewTestModel(int x);
 }
 
-class Program
+internal class Program
 {
-    static void Main()
+    private static void Main(string[] args)
     {
-        var obj = Accessors.Create(123);
-        Console.WriteLine(obj.Value); // 123
+        var model = Accessors.NewTestModel(100);
+        ref var value = ref Accessors.Value(model);
+        Console.WriteLine($"_value: {value}");
+
+        value += 50;
+        Console.WriteLine($"_value updated: {value}");
+
+        ref var staticValue = ref Accessors.StaticValue(model);
+        Console.WriteLine($"_staticValue: {staticValue}");
+        staticValue += 10;
+        Console.WriteLine($"_staticValue updated: {staticValue}");
+
+        var message = Accessors.GetMessage(model, 7);
+        Console.WriteLine($"GetMessage: {message}");
+
+        var staticMessage = Accessors.GetStaticMessage(null, 7);
+        Console.WriteLine($"GetStaticMessage: {message}");
+
+        Console.Read();
     }
 }
 ```
@@ -119,7 +97,7 @@ class Program
 
 | Feature | Reflection | `UnsafeAccessor` (.NET 8) | ILAccess.Fody |
 |---|---:|---:|---:|
-| Performance | ❌ Slow | ✅ Fast | ✅ Fast |
+| Performance | Slow ❌ | Fast ✅ | Fast ✅ |
 | Works before .NET 8 | ✅ | ❌ | ✅ |
 | Compile-time validation | ❌ | ✅ | ✅ |
 
