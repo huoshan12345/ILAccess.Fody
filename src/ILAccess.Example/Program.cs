@@ -30,9 +30,9 @@ public class TestModel
     private static int _staticValue = 42;
     private int _value;
     private TestModel(int value) => _value = value;
-    private string GetMessage(int code) 
+    private string GetMessage(int code)
         => $"Current value: {_value}, code: {code}";
-    private static string GetStaticMessage(int code) 
+    private static string GetStaticMessage(int code)
         => $"Current static value: {_staticValue}, code: {code}";
 }
 
@@ -76,6 +76,9 @@ internal class Program
         var staticMessage = Accessors.GetStaticMessage(null, 7);
         Console.WriteLine($"GetStaticMessage: {message}");
 
+        Console.WriteLine();
+        ExceptionAccessors.Test();
+
         Console.Read();
     }
 }
@@ -93,7 +96,7 @@ public static class ExceptionAccessors
 
     [ILAccessor(ILAccessorKind.Method, Name = nameof(Exception.GetBaseException))]
     public static extern string GetBaseException(this Exception obj);
-    
+
     public static void Test()
     {
         var ex = new Exception("xxxxxx");
