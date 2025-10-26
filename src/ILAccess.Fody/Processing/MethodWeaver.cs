@@ -72,12 +72,27 @@ internal sealed class MethodWeaver
         }
     }
 
+    private static readonly HashSet<string> CtorNames = [".ctor", ".cctor"];
+
     private bool ProcessImpl([NotNullWhen(true)] out string? assemblyName)
     {
-        if (_method.Parameters.Count == 0)
-            throw new WeavingException("The method must have at least one parameter to identify the target type.");
+        var kind = (ILAccessorKind)_anchorAttribute.ConstructorArguments.Single().Value;
+        var name = (string?)_anchorAttribute.Properties.SingleOrDefault().Argument.Value;
+        if (name is null && kind != ILAccessorKind.Constructor)
+            throw new WeavingException($"The property 'Name' should be specific for {kind} on {WeaverAnchors.AttributeName}");
 
-        var typeRef = _method.Parameters[0].ParameterType;
+        TypeReference? typeRef;
+        if (kind == ILAccessorKind.Constructor)
+        {
+            typeRef = _method.ReturnType;
+        }
+        else
+        {
+            if (_method.Parameters.Count == 0)
+                throw new WeavingException($"For {kind}, the type of the first argument of the annotated extern static method should be the owning type.");
+
+            typeRef = _method.Parameters[0].ParameterType;
+        }
 
         if (typeRef.HasGenericParameters)
         {
@@ -89,10 +104,6 @@ internal sealed class MethodWeaver
         }
 
         var type = typeRef.Resolve();
-        var kind = (ILAccessorKind)_anchorAttribute.ConstructorArguments.Single().Value;
-        var name = (string?)_anchorAttribute.Properties.SingleOrDefault().Argument.Value;
-        if (name is null && kind != ILAccessorKind.Constructor)
-            throw new WeavingException($"The property 'Name' should be specific for {kind} on {WeaverAnchors.AttributeName}");
 
         var isReturnRef = _method.ReturnType.IsByReference;
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
@@ -103,11 +114,15 @@ internal sealed class MethodWeaver
             case ILAccessorKind.StaticMethod:
             {
                 var isCtor = kind == ILAccessorKind.Constructor;
+                var isCtorMethod = kind != ILAccessorKind.Constructor && name != null && CtorNames.Contains(name);
                 var isStatic = kind == ILAccessorKind.StaticMethod;
-                var paras = _method.Parameters.Skip(1).Select(p => p.ParameterType).ToArray();
-                var method = _context.FindMethod(type, name, paras, isCtor, isStatic);
+                var paras = isCtor
+                    ? _method.Parameters
+                    : _method.Parameters.Skip(1);
+                var parameterTypes = paras.Select(p => p.ParameterType).ToArray();
+                var method = _context.FindMethod(type, name, parameterTypes, isCtor || isCtorMethod, isStatic);
 
-                var start = isCtor || isStatic ? 1 : 0;
+                var start = isStatic ? 1 : 0;
                 for (var i = start; i < _method.Parameters.Count; i++)
                 {
                     _il.IL.Append(_il.IL.Create(OpCodes.Ldarg, i));
@@ -268,8 +283,8 @@ file static class Extensions
         MethodDefinition[] GetMethods(TypeDefinition def)
         {
             return def.Methods
-                .Where(m => m.IsConstructor == isCtor
-                            && m.IsStatic == isStatic
+                .Where(m => m.IsStatic == isStatic
+                            && m.IsConstructor == isCtor
                             && (isCtor == false && m.Name == name || isCtor)
                             && m.Parameters.Select(x => x.ParameterType)
                                 .SequenceEqual(parameterTypes, TypeReferenceEqualityComparer.Instance))

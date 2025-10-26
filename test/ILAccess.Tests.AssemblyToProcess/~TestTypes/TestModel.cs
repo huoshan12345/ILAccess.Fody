@@ -9,6 +9,8 @@
 // ReSharper disable UnassignedField.Global
 
 using System;
+using System.Runtime.CompilerServices;
+using System.Security.Claims;
 
 #pragma warning disable CS0169 // Field is never used
 #pragma warning disable IDE0044 // Add readonly modifier
@@ -85,15 +87,16 @@ public static class TestModelExtensions
 
     [ILAccessor(ILAccessorKind.Field, Name = "PublicField")]
     public static extern ref int RefPublicField(this TestModel c);
+
+    [ILAccessor(ILAccessorKind.Method, Name = ".ctor")]
+    public static extern void PrivateCtorAsMethod(this TestModel c, int i, string s, ref double rf);
 }
 
 public static class Accessors
 {
     [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern TestModel Ctor(TestModel? c = null);
+    public static extern TestModel Ctor();
 
     [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern TestModel Ctor(TestModel? c, int i, string s, ref double rf);
-
-    public static TestModel _Ctor(TestModel? c, int i, string s, ref double rf) => new(i, s, ref rf);
+    public static extern TestModel Ctor(int i, string s, ref double rf);
 }
