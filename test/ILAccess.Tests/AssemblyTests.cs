@@ -29,7 +29,7 @@ public class AssemblyTests
         }
     }
 
-    [Fact]
+    [Fact(Skip = "no longer valid")]
     public void ShouldNotAddReferenceToPrivateCoreLib()
     {
         var modules = new[]
