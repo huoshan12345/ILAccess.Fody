@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Reflection;
-using FclEx.Extensions;
+using System.Runtime.InteropServices;
 using Fody;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
@@ -8,20 +8,6 @@ using Xunit;
 using Xunit.Abstractions;
 
 namespace ILAccess.Example.Tests;
-
-public static class Extensions
-{
-    public static IEnumerable<Assembly> GetAllReferenceAssemblies(this Assembly source)
-    {
-        var results = new List<Assembly> { source };
-        foreach (var name in source.GetReferencedAssemblies())
-        {
-            var loaded = Assembly.Load(name);
-            results.AddRange(loaded.GetAllReferenceAssemblies());
-        }
-        return results.Distinct();
-    }
-}
 
 public class ILAccessTests(ITestOutputHelper output)
 {
@@ -31,13 +17,25 @@ public class ILAccessTests(ITestOutputHelper output)
 #if NETFRAMEWORK
          ".exe";
 #else
-         ".dll";
+        ".dll";
 #endif
     private const string AssemblyName = ProjectName + AssemblyExtension;
 
+    private static string GetReferencesPath()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return "refs.txt";
+        }
+        else
+        {
+            return "refs-linux.txt";
+        }
+    }
+
     [Fact(
         // Skip = $"set DisableFody for the {ProjectName} first and then run this test"
-        )]
+    )]
     public void Weave_Test()
     {
         var rootDir = AppContext.BaseDirectory.TakeUntil("test", false);
@@ -50,8 +48,10 @@ public class ILAccessTests(ITestOutputHelper output)
         //var assembly = Assembly.Load(assemblyBytes);
         // var refs = assembly.GetAllReferenceAssemblies().Select(m => m.Location).OrderBy(m => m).ToArray();
 
-        var refsFromText = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "refs.txt"))
-            .SplitToLines()
+        var refsFromText = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "TestData", GetReferencesPath()))
+            .Split(['\r', '\n'])
+            .Select(m => m.Trim())
+            .Where(m => m.Length > 0)
             .OrderBy(m => m)
             .ToArray();
 
@@ -67,7 +67,7 @@ public class ILAccessTests(ITestOutputHelper output)
             ProjectDirectory = projectDir,
             ProjectFile = projectFile,
             DocumentationFile = null,
-            References = refsFromText.JoinWith(";"),
+            References = string.Join(";", refsFromText),
             ReferenceCopyLocalFiles = [],
             RuntimeCopyLocalFiles = [],
             WeaverFiles = [new TaskItem(weaver)],
@@ -84,10 +84,11 @@ public class ILAccessTests(ITestOutputHelper output)
         };
 
         var result = task.Execute();
-        Assert.True(result, engine.LogErrorEvents.FirstOrDefault()?.Message);
+        var error = engine.LogErrorEvents.FirstOrDefault()?.Message;
+        Assert.True(result, error);
+        Assert.True(engine.LogErrorEvents.Count == 0, error);
     }
 }
-
 
 public class FakeBuildEngine : IBuildEngine
 {
@@ -96,7 +97,8 @@ public class FakeBuildEngine : IBuildEngine
     public readonly List<CustomBuildEventArgs> LogCustomEvents = [];
     public readonly List<BuildWarningEventArgs> LogWarningEvents = [];
 
-    public bool BuildProjectFile(string projectFileName, string[] targetNames, IDictionary globalProperties, IDictionary targetOutputs)
+    public bool BuildProjectFile(string projectFileName, string[] targetNames, IDictionary globalProperties,
+        IDictionary targetOutputs)
     {
         throw new NotImplementedException();
     }
@@ -110,4 +112,38 @@ public class FakeBuildEngine : IBuildEngine
     public void LogErrorEvent(BuildErrorEventArgs e) => LogErrorEvents.Add(e);
     public void LogMessageEvent(BuildMessageEventArgs e) => LogMessageEvents.Add(e);
     public void LogWarningEvent(BuildWarningEventArgs e) => LogWarningEvents.Add(e);
+}
+
+file static class Extensions
+{
+    public static string TakeUntil(this string source, string separator, bool includeSeparator = true,
+        StringComparison comparison = StringComparison.Ordinal, bool untilLast = false)
+    {
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        if (separator == null) throw new ArgumentNullException(nameof(separator));
+
+        var location = untilLast
+            ? source.LastIndexOf(separator, comparison)
+            : source.IndexOf(separator, comparison);
+
+        if (location < 0)
+            return source;
+
+        if (includeSeparator)
+            location += separator.Length;
+
+        return source[..location];
+    }
+
+    public static IEnumerable<Assembly> GetAllReferenceAssemblies(this Assembly source)
+    {
+        var results = new List<Assembly> { source };
+        foreach (var name in source.GetReferencedAssemblies())
+        {
+            var loaded = Assembly.Load(name);
+            results.AddRange(loaded.GetAllReferenceAssemblies());
+        }
+
+        return results.Distinct();
+    }
 }
