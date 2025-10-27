@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -76,8 +77,11 @@ internal class Program
         var staticMessage = Accessors.GetStaticMessage(null, 7);
         Console.WriteLine($"GetStaticMessage: {message}");
 
-        Console.WriteLine();
+        Console.WriteLine("Testing Exception accessors");
         ExceptionAccessors.Test();
+
+        Console.WriteLine("Testing List<T> accessors");
+        ListAccessors.Test();
 
         Console.Read();
     }
@@ -109,5 +113,26 @@ public static class ExceptionAccessors
         Console.WriteLine($"StackTrace: {ex.StackTrace}");
         Console.WriteLine($"GetStackTrace: {ex.GetStackTrace()}");
         Console.WriteLine($"GetBaseException: {ex.GetBaseException()}");
+    }
+}
+
+public static class ListAccessors
+{
+    [ILAccessor(ILAccessorKind.Field, Name = "_items")]
+    public static extern ref T[] Items<T>(this List<T> obj);
+
+    [ILAccessor(ILAccessorKind.Method, Name = "Grow")]
+    public static extern void Grow<T>(this List<T> obj, int capacity);
+
+    public static void Test()
+    {
+        var list = new List<string> { "xxxxxx" };
+        ref var items = ref list.Items();
+        items[0] = "yyyyyy";
+        Console.WriteLine($"List[0]: {list[0]}");
+
+        Console.WriteLine($"Capacity: {list.Capacity}");
+        list.Grow(100);
+        Console.WriteLine($"Capacity after Grow: {list.Capacity}");
     }
 }
