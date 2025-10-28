@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <Target Name="Show" AfterTargets="Build">
-    <Message Text="ReferencePath: @(ReferencePath)" Importance="high" />
+    <!--<Message Text="ReferencePath: @(ReferencePath)" Importance="high" />-->
   </Target>
 
 </Project>

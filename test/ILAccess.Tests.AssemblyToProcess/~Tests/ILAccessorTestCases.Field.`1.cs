@@ -1,83 +1,84 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace ILAccess.Tests.AssemblyToProcess;
 
 public partial class ILAccessorTestCases
 {
-    [Fact]
-    public void PublicStaticField_T_Get()
+    [FakeFact]
+    public void GenericType_PublicStaticField_Get()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string>();
+        var obj = new TestModel<string>();
         Set(random.NextString(10));
         var value = obj.PublicStaticField();
         Assert.Equal(Get(), value);
 
         static string? Get()
         {
-            return GenericTestModel<string>.PublicStaticField;
+            return TestModel<string>.PublicStaticField;
         }
 
         static void Set(string value)
         {
-            GenericTestModel<string>.PublicStaticField = value;
+            TestModel<string>.PublicStaticField = value;
         }
     }
 
-    [Fact]
-    public void PrivateStaticField_T_Get()
+    [FakeFact]
+    public void GenericType_PrivateStaticField_Get()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string>();
+        var obj = new TestModel<string>();
         Set(random.NextString(10));
         var value = obj.PrivateStaticField();
         Assert.Equal(Get(), value);
 
         static string? Get()
         {
-            return (string?)typeof(GenericTestModel<string>).GetRequiredField("PrivateStaticField").GetValue(null);
+            return (string?)typeof(TestModel<string>).GetRequiredField("PrivateStaticField").GetValue(null);
         }
 
         static void Set(string? value)
         {
-            typeof(GenericTestModel<string>).GetRequiredField("PrivateStaticField").SetValue(null, value);
+            typeof(TestModel<string>).GetRequiredField("PrivateStaticField").SetValue(null, value);
         }
     }
 
-    [Fact]
-    public void PublicField_T_Get()
+    [FakeFact]
+    public void GenericType_PublicField_Get()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string> { PublicField = random.NextString(10) };
+        var obj = new TestModel<string> { PublicField = random.NextString(10) };
         var value = obj.PublicField();
         Assert.Equal(obj.PublicField, value);
     }
 
-    [Fact]
-    public void PrivateField_T_Get()
+    [FakeFact]
+    public void GenericType_PrivateField_Get()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string>();
+        var obj = new TestModel<string>();
         Set(obj, random.NextString(10));
         var value = obj.PrivateField();
         Assert.Equal(Get(obj), value);
 
-        static string? Get(GenericTestModel<string> obj)
+        static string? Get(TestModel<string> obj)
         {
-            return (string?)typeof(GenericTestModel<string>).GetRequiredField("PrivateField").GetValue(obj);
+            return (string?)typeof(TestModel<string>).GetRequiredField("PrivateField").GetValue(obj);
         }
 
-        static void Set(GenericTestModel<string> obj, string? value)
+        static void Set(TestModel<string> obj, string? value)
         {
-            typeof(GenericTestModel<string>).GetRequiredField("PrivateField").SetValue(obj, value);
+            typeof(TestModel<string>).GetRequiredField("PrivateField").SetValue(obj, value);
         }
     }
 
-    [Fact]
-    public void RefPublicStaticField_T_Get_Set()
+    [FakeFact]
+    public void GenericType_RefPublicStaticField_Get_Set()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string>();
+        var obj = new TestModel<string>();
         Set(random.NextString(10));
         ref var value = ref obj.RefPublicStaticField();
         Assert.Equal(Get(), value);
@@ -89,20 +90,20 @@ public partial class ILAccessorTestCases
 
         static string? Get()
         {
-            return GenericTestModel<string>.PublicStaticField;
+            return TestModel<string>.PublicStaticField;
         }
 
         static void Set(string value)
         {
-            GenericTestModel<string>.PublicStaticField = value;
+            TestModel<string>.PublicStaticField = value;
         }
     }
 
-    [Fact]
-    public void RefPrivateStaticField_T_Get_Set()
+    [FakeFact]
+    public void GenericType_RefPrivateStaticField_Get_Set()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string>();
+        var obj = new TestModel<string>();
         Set(random.NextString(10));
         ref var value = ref obj.RefPrivateStaticField();
         Assert.Equal(Get(), value);
@@ -114,20 +115,20 @@ public partial class ILAccessorTestCases
 
         static string? Get()
         {
-            return (string?)typeof(GenericTestModel<string>).GetRequiredField("PrivateStaticField").GetValue(null);
+            return (string?)typeof(TestModel<string>).GetRequiredField("PrivateStaticField").GetValue(null);
         }
 
         static void Set(string? value)
         {
-            typeof(GenericTestModel<string>).GetRequiredField("PrivateStaticField").SetValue(null, value);
+            typeof(TestModel<string>).GetRequiredField("PrivateStaticField").SetValue(null, value);
         }
     }
 
-    [Fact]
-    public void RefPublicField_T_Get_Set()
+    [FakeFact]
+    public void GenericType_RefPublicField_Get_Set()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string> { PublicField = random.NextString(10) };
+        var obj = new TestModel<string> { PublicField = random.NextString(10) };
         ref var value = ref obj.RefPublicField();
         Assert.Equal(obj.PublicField, value);
 
@@ -137,11 +138,11 @@ public partial class ILAccessorTestCases
         Assert.Equal(newValue, obj.RefPublicField());
     }
 
-    [Fact]
-    public void RefPrivateField_T_Get_Set()
+    [FakeFact]
+    public void GenericType_RefPrivateField_Get_Set()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string>();
+        var obj = new TestModel<string>();
         Set(obj, random.NextString(10));
         ref var value = ref obj.RefPrivateField();
         Assert.Equal(Get(obj), value);
@@ -151,92 +152,91 @@ public partial class ILAccessorTestCases
         Assert.Equal(newValue, Get(obj));
         Assert.Equal(newValue, obj.RefPrivateField());
 
-        static string? Get(GenericTestModel<string> obj)
+        static string? Get(TestModel<string> obj)
         {
-            return (string?)typeof(GenericTestModel<string>).GetRequiredField("PrivateField").GetValue(obj);
+            return (string?)typeof(TestModel<string>).GetRequiredField("PrivateField").GetValue(obj);
         }
 
-        static void Set(GenericTestModel<string> obj, string? value)
+        static void Set(TestModel<string> obj, string? value)
         {
-            typeof(GenericTestModel<string>).GetRequiredField("PrivateField").SetValue(obj, value);
+            typeof(TestModel<string>).GetRequiredField("PrivateField").SetValue(obj, value);
         }
     }
 
-
-    [Fact]
-    public void PublicStaticField_T_GenericAccessors_Get()
+    [FakeFact]
+    public void GenericType_PublicStaticField_GenericAccessors_Get()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string>();
+        var obj = new TestModel<string>();
         Set(random.NextString(10));
         var value = obj.PublicStaticField_GenericAccessors();
         Assert.Equal(Get(), value);
 
         static string? Get()
         {
-            return GenericTestModel<string>.PublicStaticField;
+            return TestModel<string>.PublicStaticField;
         }
 
         static void Set(string value)
         {
-            GenericTestModel<string>.PublicStaticField = value;
+            TestModel<string>.PublicStaticField = value;
         }
     }
 
-    [Fact]
-    public void PrivateStaticField_T_GenericAccessors_Get()
+    [FakeFact]
+    public void GenericType_PrivateStaticField_GenericAccessors_Get()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string>();
+        var obj = new TestModel<string>();
         Set(random.NextString(10));
         var value = obj.PrivateStaticField_GenericAccessors();
         Assert.Equal(Get(), value);
 
         static string? Get()
         {
-            return (string?)typeof(GenericTestModel<string>).GetRequiredField("PrivateStaticField").GetValue(null);
+            return (string?)typeof(TestModel<string>).GetRequiredField("PrivateStaticField").GetValue(null);
         }
 
         static void Set(string? value)
         {
-            typeof(GenericTestModel<string>).GetRequiredField("PrivateStaticField").SetValue(null, value);
+            typeof(TestModel<string>).GetRequiredField("PrivateStaticField").SetValue(null, value);
         }
     }
 
-    [Fact]
-    public void PublicField_T_GenericAccessors_Get()
+    [FakeFact]
+    public void GenericType_PublicField_GenericAccessors_Get()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string> { PublicField = random.NextString(10) };
+        var obj = new TestModel<string> { PublicField = random.NextString(10) };
         var value = obj.PublicField_GenericAccessors();
         Assert.Equal(obj.PublicField, value);
     }
 
-    [Fact]
-    public void PrivateField_T_GenericAccessors_Get()
+    [FakeFact]
+    public void GenericType_PrivateField_GenericAccessors_Get()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string>();
+        var obj = new TestModel<string>();
         Set(obj, random.NextString(10));
         var value = obj.PrivateField_GenericAccessors();
         Assert.Equal(Get(obj), value);
 
-        static string? Get(GenericTestModel<string> obj)
+        static string? Get(TestModel<string> obj)
         {
-            return (string?)typeof(GenericTestModel<string>).GetRequiredField("PrivateField").GetValue(obj);
+            return (string?)typeof(TestModel<string>).GetRequiredField("PrivateField").GetValue(obj);
         }
 
-        static void Set(GenericTestModel<string> obj, string? value)
+        static void Set(TestModel<string> obj, string? value)
         {
-            typeof(GenericTestModel<string>).GetRequiredField("PrivateField").SetValue(obj, value);
+            typeof(TestModel<string>).GetRequiredField("PrivateField").SetValue(obj, value);
         }
     }
-    
-    [Fact]
-    public void RefPublicStaticField_T_GenericAccessors_Get_Set()
+
+    [FakeFact]
+    public void GenericType_RefPublicStaticField_GenericAccessors_Get_Set()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string>();
+        var obj = new TestModel<string>();
         Set(random.NextString(10));
         ref var value = ref obj.RefPublicStaticField_GenericAccessors();
         Assert.Equal(Get(), value);
@@ -248,20 +248,20 @@ public partial class ILAccessorTestCases
 
         static string? Get()
         {
-            return GenericTestModel<string>.PublicStaticField;
+            return TestModel<string>.PublicStaticField;
         }
 
         static void Set(string value)
         {
-            GenericTestModel<string>.PublicStaticField = value;
+            TestModel<string>.PublicStaticField = value;
         }
     }
 
-    [Fact]
-    public void RefPrivateStaticField_T_GenericAccessors_Get_Set()
+    [FakeFact]
+    public void GenericType_RefPrivateStaticField_GenericAccessors_Get_Set()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string>();
+        var obj = new TestModel<string>();
         Set(random.NextString(10));
         ref var value = ref obj.RefPrivateStaticField_GenericAccessors();
         Assert.Equal(Get(), value);
@@ -273,20 +273,20 @@ public partial class ILAccessorTestCases
 
         static string? Get()
         {
-            return (string?)typeof(GenericTestModel<string>).GetRequiredField("PrivateStaticField").GetValue(null);
+            return (string?)typeof(TestModel<string>).GetRequiredField("PrivateStaticField").GetValue(null);
         }
 
         static void Set(string? value)
         {
-            typeof(GenericTestModel<string>).GetRequiredField("PrivateStaticField").SetValue(null, value);
+            typeof(TestModel<string>).GetRequiredField("PrivateStaticField").SetValue(null, value);
         }
     }
 
-    [Fact]
-    public void RefPublicField_T_GenericAccessors_Get_Set()
+    [FakeFact]
+    public void GenericType_RefPublicField_GenericAccessors_Get_Set()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string> { PublicField = random.NextString(10) };
+        var obj = new TestModel<string> { PublicField = random.NextString(10) };
         ref var value = ref obj.RefPublicField_GenericAccessors();
         Assert.Equal(obj.PublicField, value);
 
@@ -296,11 +296,11 @@ public partial class ILAccessorTestCases
         Assert.Equal(newValue, obj.RefPublicField_GenericAccessors());
     }
 
-    [Fact]
-    public void RefPrivateField_T_GenericAccessors_Get_Set()
+    [FakeFact]
+    public void GenericType_RefPrivateField_GenericAccessors_Get_Set()
     {
         var random = new Random(0);
-        var obj = new GenericTestModel<string>();
+        var obj = new TestModel<string>();
         Set(obj, random.NextString(10));
         ref var value = ref obj.RefPrivateField_GenericAccessors();
         Assert.Equal(Get(obj), value);
@@ -310,14 +310,29 @@ public partial class ILAccessorTestCases
         Assert.Equal(newValue, Get(obj));
         Assert.Equal(newValue, obj.RefPrivateField_GenericAccessors());
 
-        static string? Get(GenericTestModel<string> obj)
+        static string? Get(TestModel<string> obj)
         {
-            return (string?)typeof(GenericTestModel<string>).GetRequiredField("PrivateField").GetValue(obj);
+            return (string?)typeof(TestModel<string>).GetRequiredField("PrivateField").GetValue(obj);
         }
 
-        static void Set(GenericTestModel<string> obj, string? value)
+        static void Set(TestModel<string> obj, string? value)
         {
-            typeof(GenericTestModel<string>).GetRequiredField("PrivateField").SetValue(obj, value);
+            typeof(TestModel<string>).GetRequiredField("PrivateField").SetValue(obj, value);
         }
+    }
+
+    [FakeFact]
+    public void GenericType_CrossAssembly_List_RefPrivateField_Get_Set()
+    {
+        var list = new List<string> { "xxxxxxxxxxx" };
+        ref var items = ref list.Items();
+        Assert.Equal(list[0], items[0]);
+
+        items[0] = "yyyyyyyyyyy";
+        Assert.Equal(items[0], list[0]);
+
+        items = ["zzzzzzzzzzz", "aaaaaaaaaaa"];
+        Assert.Equal(1, list.Count); // list count won't change
+        Assert.Equal(items[0], list[0]);
     }
 }

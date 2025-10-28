@@ -94,15 +94,6 @@ internal sealed class MethodWeaver
             typeRef = _method.Parameters[0].ParameterType;
         }
 
-        if (typeRef.HasGenericParameters)
-        {
-            var genericType = (GenericInstanceType)typeRef;
-            foreach (var parameter in typeRef.GenericParameters)
-            {
-                genericType.GenericArguments.Add(parameter);
-            }
-        }
-
         var type = typeRef.Resolve();
 
         var isReturnRef = _method.ReturnType.IsByReference;
@@ -122,6 +113,14 @@ internal sealed class MethodWeaver
                 var parameterTypes = paras.Select(p => p.ParameterType).ToArray();
                 var method = _context.FindMethod(type, name, parameterTypes, isCtor || isCtorMethod, isStatic);
 
+                // do not use _context.Module.ImportReference(method); here because it won't do anything when method is from the same module.
+                var importer = _context.Module.GetMetadataImporter();
+                var methodRef = importer.ImportReference(method, null);
+
+                // after importing, the DeclaringType will be an open generic type.
+                // so needs to set the method declaring type to the correct instantiated type.
+                methodRef.DeclaringType = typeRef;
+
                 var start = isStatic ? 1 : 0;
                 for (var i = start; i < _method.Parameters.Count; i++)
                 {
@@ -135,7 +134,7 @@ internal sealed class MethodWeaver
                     _ => OpCodes.Callvirt,
                 };
 
-                _il.IL.Append(_il.Create(callCode, _context.Module.ImportReference(method)));
+                _il.IL.Append(_il.Create(callCode, methodRef));
                 _il.IL.Append(_il.Create(OpCodes.Ret));
 
                 assemblyName = method.Module.Assembly.Name.Name;

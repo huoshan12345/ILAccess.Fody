@@ -29,7 +29,7 @@ public static class TestsSource
         foreach (var method in methods.Where(m => m.DeclaredAccessibility == Accessibility.Public && m.MethodKind == MethodKind.Ordinary))
         {
             var attrs = method.GetAttributes();
-            if (attrs.Any(IsXunitFact))
+            if (attrs.Any(IsFact))
             {
                 builder.WriteLine();
                 builder.WriteLine("[Fact]")
@@ -59,9 +59,9 @@ public static class TestsSource
         return ($"{className}.g.cs", str);
     }
 
-    private static bool IsXunitFact(AttributeData attr)
+    private static bool IsFact(AttributeData attr)
     {
         var name = attr.AttributeClass?.Name;
-        return name == "FactAttribute";
+        return name == "FakeFactAttribute";
     }
 }

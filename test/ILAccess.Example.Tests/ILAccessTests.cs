@@ -12,13 +12,7 @@ namespace ILAccess.Example.Tests;
 public class ILAccessTests(ITestOutputHelper output)
 {
     private const string ProjectName = "ILAccess.Example";
-
-    private const string AssemblyExtension =
-#if NETFRAMEWORK
-         ".exe";
-#else
-        ".dll";
-#endif
+    private const string AssemblyExtension = ".dll";
     private const string AssemblyName = ProjectName + AssemblyExtension;
 
     private static string GetReferencesPath()
@@ -33,8 +27,10 @@ public class ILAccessTests(ITestOutputHelper output)
         }
     }
 
+    // NOTE: This test helps to debug the weaver when some references are Reference assemblies
+    // Please set the property DisableFody to true in the csproj to disable Fody when running this test
     [Fact]
-    public void Weave_Test()
+    public void Weave_WithReferenceAssemblies_Test()
     {
         var rootDir = AppContext.BaseDirectory.TakeUntil("test", false);
         var projectDir = Path.Combine(rootDir, "src", ProjectName);
@@ -46,6 +42,7 @@ public class ILAccessTests(ITestOutputHelper output)
         //var assembly = Assembly.Load(assemblyBytes);
         // var refs = assembly.GetAllReferenceAssemblies().Select(m => m.Location).OrderBy(m => m).ToArray();
 
+        // Read references from text file, which contains some Reference assemblies
         var refsFromText = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "TestData", GetReferencesPath()))
             .Split(['\r', '\n'])
             .Select(m => m.Trim())

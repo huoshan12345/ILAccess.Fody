@@ -6,7 +6,7 @@ namespace ILAccess.Tests.AssemblyToProcess;
 
 public partial class ILAccessorTestCases
 {
-    [Fact]
+    [FakeFact]
     public void PublicStaticField_Get()
     {
         var obj = new TestModel();
@@ -14,7 +14,7 @@ public partial class ILAccessorTestCases
         Assert.Equal(TestModel.PublicStaticField, value);
     }
 
-    [Fact]
+    [FakeFact]
     public void PrivateStaticField_Get()
     {
         var obj = new TestModel();
@@ -27,7 +27,7 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [Fact]
+    [FakeFact]
     public void PublicField_Get()
     {
         var obj = new TestModel();
@@ -35,7 +35,7 @@ public partial class ILAccessorTestCases
         Assert.Equal(obj.PublicField, value);
     }
 
-    [Fact]
+    [FakeFact]
     public void PrivateField_Get()
     {
         var obj = new TestModel();
@@ -48,7 +48,7 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [Fact]
+    [FakeFact]
     public void RefPublicStaticField_Get_Set()
     {
         var obj = new TestModel();
@@ -65,7 +65,7 @@ public partial class ILAccessorTestCases
         Assert.Equal(newValue, TestModel.PublicStaticField);
     }
 
-    [Fact]
+    [FakeFact]
     public void RefPrivateStaticField_Get_Set()
     {
         var obj = new TestModel();
@@ -91,7 +91,7 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [Fact]
+    [FakeFact]
     public void RefPublicField_Get_Set()
     {
         var obj = new TestModel();
@@ -103,7 +103,7 @@ public partial class ILAccessorTestCases
         Assert.Equal(newValue, obj.PublicField);
     }
 
-    [Fact]
+    [FakeFact]
     public void RefPrivateField_Get_Set()
     {
         var obj = new TestModel();
@@ -120,14 +120,11 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [ILAccessor(ILAccessorKind.Field, Name = "_message")]
-    public static extern ref string Message(Exception obj);
-
-    [Fact]
-    public void RefPrivateField_CrossAssembly_Get_Set()
+    [FakeFact]
+    public void RefPrivateField_CrossAssembly_Exception_Get_Set()
     {
         var ex = new Exception("xxxxxx");
-        ref var value = ref Message(ex);
+        ref var value = ref ex.Message();
         Assert.Equal(ex.Message, value);
 
         var newValue = ex.Message + "_Modified";

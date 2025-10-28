@@ -47,12 +47,13 @@ public class TestModel
     public int PublicPropertyWithPrivateGetter { private get; set; } = _start++;
     public int PublicPropertyWithoutSetter { get; } = _start++;
 
-    internal TestModel() { }
 
     private static readonly Random _random = new(0);
-    internal readonly int _i = _random.Next(100, 1000);
-    internal readonly string _s = _random.NextString(10);
-    internal readonly double _d = _random.NextDouble();
+    protected internal readonly int _i = _random.Next(100, 1000);
+    protected internal readonly string _s = _random.NextString(10);
+    protected internal readonly double _d = _random.NextDouble();
+
+    internal TestModel() { }
 
     internal TestModel(int i, string s, ref double rd)
     {
@@ -62,7 +63,7 @@ public class TestModel
     }
 }
 
-public static class TestModelExtensions
+public static partial class TestModelAccessors
 {
     [ILAccessor(ILAccessorKind.StaticField, Name = "PrivateStaticField")]
     public static extern int PrivateStaticField(this TestModel? c);
@@ -89,10 +90,10 @@ public static class TestModelExtensions
     public static extern ref int RefPublicField(this TestModel c);
 
     [ILAccessor(ILAccessorKind.Method, Name = ".ctor")]
-    public static extern void PrivateCtorAsMethod(this TestModel c, int i, string s, ref double rf);
+    public static extern void CtorAsMethod(this TestModel c, int i, string s, ref double rf);
 }
 
-public static class Accessors
+public static partial class TestModelAccessors
 {
     [ILAccessor(ILAccessorKind.Constructor)]
     public static extern TestModel Ctor();

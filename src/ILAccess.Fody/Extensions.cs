@@ -1,10 +1,19 @@
 using System.IO;
-using MoreFodyHelpers.Building;
+using System.Reflection;
+using static System.Reflection.BindingFlags;
+using MethodAttributes = Mono.Cecil.MethodAttributes;
+using TypeAttributes = Mono.Cecil.TypeAttributes;
 
 namespace ILAccess.Fody;
 
 public static class Extensions
 {
+    public static PropertyInfo GetRequiredProperty(this Type type, string name)
+    {
+        return type.GetProperty(name, Public | NonPublic | Instance | Static)
+               ?? throw new InvalidOperationException($"Cannot find property '{name}' in type '{type.FullName}'");
+    }
+
     public static TypeDefinition GetOrAddIgnoresAccessChecksToAttribute(this ModuleWeavingContext context)
     {
         var module = context.Module;
@@ -86,5 +95,13 @@ public static class Extensions
             importScope.Targets.RemoveWhere(t => t.AssemblyReference?.Name == assemblyName || t.Type.IsWeaverReferenced(context));
             ProcessImportScope(importScope.Parent);
         }
+    }
+
+
+    private static readonly PropertyInfo _propertyMetadataImporter = typeof(ModuleDefinition).GetRequiredProperty("MetadataImporter");
+
+    public static IMetadataImporter GetMetadataImporter(this ModuleDefinition module)
+    {
+        return (IMetadataImporter)_propertyMetadataImporter.GetValue(module);
     }
 }
