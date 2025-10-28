@@ -93,7 +93,7 @@ public static class TestModelExtensions
     public static extern void PrivateCtorAsMethod(this TestModel c, int i, string s, ref double rf);
 }
 
-public static class Accessors
+public static partial class Accessors
 {
     [ILAccessor(ILAccessorKind.Constructor)]
     public static extern TestModel Ctor();
