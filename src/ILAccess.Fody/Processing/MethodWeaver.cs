@@ -135,8 +135,8 @@ internal sealed class MethodWeaver
                 var method = _context.FindMethod(type, name, parameterTypes, isCtor || isCtorMethod, isStatic);
                 var methodRef = _context.Module.ImportReference(method);
 
-                // Important - setting the method declaring type to the correct instantiated type
-                methodRef.DeclaringType = typeRef;
+                //// Important - setting the method declaring type to the correct instantiated type
+                // methodRef.DeclaringType = typeRef;
 
                 var start = isStatic ? 1 : 0;
                 for (var i = start; i < _method.Parameters.Count; i++)

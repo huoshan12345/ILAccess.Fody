@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace ILAccess.Tests.AssemblyToProcess;
 
@@ -161,7 +162,7 @@ public partial class ILAccessorTestCases
             typeof(TestModel<string>).GetRequiredField("PrivateField").SetValue(obj, value);
         }
     }
-    
+
     [FakeFact]
     public void GenericType_PublicStaticField_GenericAccessors_Get()
     {
@@ -230,7 +231,7 @@ public partial class ILAccessorTestCases
             typeof(TestModel<string>).GetRequiredField("PrivateField").SetValue(obj, value);
         }
     }
-    
+
     [FakeFact]
     public void GenericType_RefPublicStaticField_GenericAccessors_Get_Set()
     {
@@ -318,5 +319,22 @@ public partial class ILAccessorTestCases
         {
             typeof(TestModel<string>).GetRequiredField("PrivateField").SetValue(obj, value);
         }
+    }
+
+    [FakeFact]
+    public void GenericType_CrossAssembly_List_RefPrivateField_Get_Set()
+    {
+        var list = new List<string> { "xxxxxxxxxxx" };
+        ref var items = ref list.Items();
+        Assert.Equal(list.Count, items.Length);
+        Assert.Equal(list[0], items[0]);
+
+        items[0] = "yyyyyyyyyyy";
+        Assert.Equal(items[0], list[0]);
+
+        items = ["zzzzzzzzzzz", "aaaaaaaaaaa"];
+        Assert.Equal(2, list.Count);
+        Assert.Equal(items[0], list[0]);
+        Assert.Equal(items[1], list[1]);
     }
 }
