@@ -10,4 +10,7 @@ namespace ILAccess.Tests.AssemblyToProcess;
 /// Marks a test method as a fake fact to help SourceGenerator to generate the actual test method.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
-public class FakeFactAttribute : Attribute;
+public class FakeFactAttribute : FactAttribute
+{
+    public override string Skip { get; set; } = "This is a fake fact attribute for source generator.";
+}
