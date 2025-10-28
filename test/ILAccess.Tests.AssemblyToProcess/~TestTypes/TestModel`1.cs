@@ -126,8 +126,8 @@ public static class ListAccessors
     [ILAccessor(ILAccessorKind.Field, Name = "_items")]
     public static extern ref T[] Items<T>(this List<T> obj);
 
-    [ILAccessor(ILAccessorKind.Method, Name = "Grow")]
-    public static extern void Grow<T>(this List<T> obj, int capacity);
+    [ILAccessor(ILAccessorKind.StaticMethod, Name = "IsCompatibleObject")]
+    public static extern bool IsCompatibleObject<T>(this List<T> obj, object? value);
 
     [ILAccessor(ILAccessorKind.Constructor)]
     public static extern List<T> Ctor<T>();
@@ -141,8 +141,8 @@ public static class GenericListAccessors<T>
     [ILAccessor(ILAccessorKind.Field, Name = "_items")]
     public static extern ref T[] Items(List<T> obj);
 
-    [ILAccessor(ILAccessorKind.Method, Name = "Grow")]
-    public static extern void Grow(List<T> obj, int capacity);
+    [ILAccessor(ILAccessorKind.StaticMethod, Name = "IsCompatibleObject")]
+    public static extern bool IsCompatibleObject(List<T> obj, object? value);
 
     [ILAccessor(ILAccessorKind.Constructor)]
     public static extern List<T> Ctor();
