@@ -8,7 +8,7 @@ public partial class ILAccessorTestCases
     [FakeFact]
     public void GenericType_Ctor_NoParams()
     {
-        var obj = Accessors.Ctor<string>();
+        var obj = TestModelAccessors.Ctor<string>();
         Assert.NotNull(obj);
 
         Assert.NotEqual(default, obj._d);
@@ -22,7 +22,7 @@ public partial class ILAccessorTestCases
         var i = 42;
         var s = "Hello, World!";
         var d = 3.14d;
-        var obj = Accessors.Ctor<string>(i, s, ref d);
+        var obj = TestModelAccessors.Ctor<string>(i, s, ref d);
         Assert.NotNull(obj);
         Assert.Equal(i, obj._i);
         Assert.Equal(s, obj._s);
@@ -36,7 +36,7 @@ public partial class ILAccessorTestCases
         var s = "Hello, World!";
         var d = 3.14d;
         var obj = RuntimeHelpers.GetUninitializedObject<TestModel<string>>();
-        obj.PrivateCtorAsMethod(i, s, ref d);
+        obj.CtorAsMethod(i, s, ref d);
 
         Assert.NotNull(obj);
         Assert.Equal(i, obj._i);
@@ -75,11 +75,26 @@ public partial class ILAccessorTestCases
         var s = "Hello, World!";
         var d = 3.14d;
         var obj = RuntimeHelpers.GetUninitializedObject<TestModel<string>>();
-        GenericAccessors<string>.PrivateCtorAsMethod(obj, i, s, ref d);
+        GenericAccessors<string>.CtorAsMethod(obj, i, s, ref d);
 
         Assert.NotNull(obj);
         Assert.Equal(i, obj._i);
         Assert.Equal(s, obj._s);
         Assert.Equal(d, obj._d);
+    }
+
+    [FakeFact]
+    public void GenericType_CrossAssembly_List_Ctor_NoParams()
+    {
+        var obj = ListAccessors.Ctor<string>();
+        Assert.NotNull(obj);
+    }
+
+    [FakeFact]
+    public void GenericType_CrossAssembly_List_Ctor_WithParams()
+    {
+        var obj = ListAccessors.Ctor<string>(5);
+        Assert.NotNull(obj);
+        Assert.Equal(5, obj.Capacity);
     }
 }

@@ -17,6 +17,8 @@
 #pragma warning disable CS0414 // Field is assigned but its value is never used
 #pragma warning disable CA2211 // Non-constant fields should not be visible
 
+using System.Collections.Generic;
+
 namespace ILAccess.Tests.AssemblyToProcess;
 
 public class TestModel<T> : TestModel
@@ -32,7 +34,7 @@ public class TestModel<T> : TestModel
     public new T? PublicField;
 }
 
-partial class Accessors
+partial class TestModelAccessors
 {
     [ILAccessor(ILAccessorKind.Constructor)]
     public static extern TestModel<T> Ctor<T>();
@@ -74,7 +76,7 @@ public static class GenericAccessors<T>
     public static extern TestModel<T> Ctor(int i, string s, ref double rf);
 
     [ILAccessor(ILAccessorKind.Method, Name = ".ctor")]
-    public static extern void PrivateCtorAsMethod(TestModel<T> c, int i, string s, ref double rf);
+    public static extern void CtorAsMethod(TestModel<T> c, int i, string s, ref double rf);
 }
 
 public static partial class GenericTestModelExtensions
@@ -104,7 +106,7 @@ public static partial class GenericTestModelExtensions
     public static extern ref T RefPublicField<T>(this TestModel<T> c);
 
     [ILAccessor(ILAccessorKind.Method, Name = ".ctor")]
-    public static extern void PrivateCtorAsMethod<T>(this TestModel<T> c, int i, string s, ref double rf);
+    public static extern void CtorAsMethod<T>(this TestModel<T> c, int i, string s, ref double rf);
 }
 
 public static partial class GenericTestModelExtensions
@@ -117,4 +119,34 @@ public static partial class GenericTestModelExtensions
     public static ref T RefPublicStaticField_GenericAccessors<T>(this TestModel<T>? c) => ref GenericAccessors<T>.RefPublicStaticField(c);
     public static ref T RefPrivateField_GenericAccessors<T>(this TestModel<T> c) => ref GenericAccessors<T>.RefPrivateField(c);
     public static ref T RefPublicField_GenericAccessors<T>(this TestModel<T> c) => ref GenericAccessors<T>.RefPublicField(c);
+}
+
+public static class ListAccessors
+{
+    [ILAccessor(ILAccessorKind.Field, Name = "_items")]
+    public static extern ref T[] Items<T>(this List<T> obj);
+
+    [ILAccessor(ILAccessorKind.Method, Name = "Grow")]
+    public static extern void Grow<T>(this List<T> obj, int capacity);
+
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern List<T> Ctor<T>();
+
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern List<T> Ctor<T>(int capacity);
+}
+
+public static class GenericListAccessors<T>
+{
+    [ILAccessor(ILAccessorKind.Field, Name = "_items")]
+    public static extern ref T[] Items(List<T> obj);
+
+    [ILAccessor(ILAccessorKind.Method, Name = "Grow")]
+    public static extern void Grow(List<T> obj, int capacity);
+
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern List<T> Ctor();
+
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern List<T> Ctor(int capacity);
 }

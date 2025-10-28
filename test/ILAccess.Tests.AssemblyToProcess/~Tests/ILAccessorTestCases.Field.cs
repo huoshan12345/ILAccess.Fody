@@ -120,14 +120,11 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [ILAccessor(ILAccessorKind.Field, Name = "_message")]
-    public static extern ref string Message(Exception obj);
-
     [FakeFact]
-    public void RefPrivateField_CrossAssembly_Get_Set()
+    public void RefPrivateField_CrossAssembly_Exception_Get_Set()
     {
         var ex = new Exception("xxxxxx");
-        ref var value = ref Message(ex);
+        ref var value = ref ex.Message();
         Assert.Equal(ex.Message, value);
 
         var newValue = ex.Message + "_Modified";

@@ -37,7 +37,7 @@ public class TestModel
         => $"Current static value: {_staticValue}, code: {code}";
 }
 
-public static class Accessors
+public static class TestModelAccessors
 {
     [ILAccessor(ILAccessorKind.Field, Name = "_value")]
     public static extern ref int Value(TestModel instance);
@@ -52,7 +52,7 @@ public static class Accessors
     public static extern string GetStaticMessage(TestModel? instance, int code);
 
     [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern TestModel NewTestModel(int x);
+    public static extern TestModel Ctor(int x);
 }
 
 public class TestModel<T>
@@ -72,19 +72,19 @@ public class TestModel<T>
     }
 }
 
-public static class Accessors<T>
+public static class TestModelAccessors<T>
 {
     [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern TestModel<T> New();
+    public static extern TestModel<T> Ctor();
 
     [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern TestModel<T> New(int i, string s, ref double rf);
+    public static extern TestModel<T> Ctor(int i, string s, ref double rf);
 }
 
 public static class TestModelExtensions
 {
     [ILAccessor(ILAccessorKind.Method, Name = ".ctor")]
-    public static extern void PrivateCtorAsMethod<T>(this TestModel<T> c, int i, string s, ref double rf);
+    public static extern void CtorAsMethod<T>(this TestModel<T> c, int i, string s, ref double rf);
 }
 
 internal class Program
@@ -92,27 +92,27 @@ internal class Program
     private static void Main(string[] args)
     {
         {
-            var model = Accessors.NewTestModel(100);
-            ref var value = ref Accessors.Value(model);
+            var model = TestModelAccessors.Ctor(100);
+            ref var value = ref TestModelAccessors.Value(model);
             Console.WriteLine($"_value: {value}");
 
             value += 50;
             Console.WriteLine($"_value updated: {value}");
 
-            ref var staticValue = ref Accessors.StaticValue(model);
+            ref var staticValue = ref TestModelAccessors.StaticValue(model);
             Console.WriteLine($"_staticValue: {staticValue}");
             staticValue += 10;
             Console.WriteLine($"_staticValue updated: {staticValue}");
 
-            var message = Accessors.GetMessage(model, 7);
+            var message = TestModelAccessors.GetMessage(model, 7);
             Console.WriteLine($"GetMessage: {message}");
 
-            var staticMessage = Accessors.GetStaticMessage(null, 7);
+            var staticMessage = TestModelAccessors.GetStaticMessage(null, 7);
             Console.WriteLine($"GetStaticMessage: {message}");
         }
 
         {
-            var model = Accessors<string>.New();
+            var model = TestModelAccessors<string>.Ctor();
             Console.WriteLine($"_i: {model._i}");
         }
 
@@ -171,11 +171,11 @@ public static class ListAccessors<T>
     public static extern void Grow(List<T> obj, int capacity);
 
     [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern List<T> New();
+    public static extern List<T> Ctor();
 
     public static void Test()
     {
-        var list = ListAccessors<string>.New();
+        var list = ListAccessors<string>.Ctor();
         list.Add("xxxxxxxxxxx");
         Console.WriteLine($"List[0]: {list[0]}");
 
@@ -198,7 +198,7 @@ public static class ListAccessors
     public static extern void Grow<T>(this List<T> obj, int capacity);
 
     [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern List<T> New<T>();
+    public static extern List<T> Ctor<T>();
 
     public static void Add<T>(this List<T> obj, T item)
     {
@@ -207,7 +207,7 @@ public static class ListAccessors
 
     public static void Test()
     {
-        var list = New<string>();
+        var list = Ctor<string>();
         list.Add("xxxxxxxxxxx");
         Console.WriteLine($"List[0]: {list[0]}");
 
