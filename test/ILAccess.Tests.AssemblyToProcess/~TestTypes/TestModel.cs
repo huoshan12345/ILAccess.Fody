@@ -63,7 +63,7 @@ public class TestModel
     }
 }
 
-public static class TestModelExtensions
+public static partial class TestModelAccessors
 {
     [ILAccessor(ILAccessorKind.StaticField, Name = "PrivateStaticField")]
     public static extern int PrivateStaticField(this TestModel? c);
@@ -100,25 +100,4 @@ public static partial class TestModelAccessors
 
     [ILAccessor(ILAccessorKind.Constructor)]
     public static extern TestModel Ctor(int i, string s, ref double rf);
-}
-
-public static class ExceptionAccessors
-{
-    [ILAccessor(ILAccessorKind.Field, Name = "_message")]
-    public static extern ref string Message(this Exception obj);
-
-    [ILAccessor(ILAccessorKind.Field, Name = "_stackTraceString")]
-    public static extern ref string StackTraceString(this Exception obj);
-
-    [ILAccessor(ILAccessorKind.Method, Name = "GetClassName")]
-    public static extern string GetClassName(this Exception obj);
-
-    [ILAccessor(ILAccessorKind.Method, Name = nameof(Exception.GetBaseException))]
-    public static extern string GetBaseException(this Exception obj);
-
-    [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern Exception Ctor();
-
-    [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern Exception Ctor(string message);
 }

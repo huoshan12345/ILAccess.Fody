@@ -1,4 +1,5 @@
 using System.IO;
+using Mono.Cecil.Rocks;
 using MoreFodyHelpers.Building;
 
 namespace ILAccess.Fody;
@@ -86,5 +87,24 @@ public static class Extensions
             importScope.Targets.RemoveWhere(t => t.AssemblyReference?.Name == assemblyName || t.Type.IsWeaverReferenced(context));
             ProcessImportScope(importScope.Parent);
         }
+    }
+
+    // https://stackoverflow.com/a/16433452/613130
+    public static MethodReference MakeHostInstanceGeneric(this MethodReference self, params TypeReference[] arguments)
+    {
+        var reference = new MethodReference(self.Name, self.ReturnType, self.DeclaringType.MakeGenericInstanceType(arguments))
+        {
+            HasThis = self.HasThis,
+            ExplicitThis = self.ExplicitThis,
+            CallingConvention = self.CallingConvention
+        };
+
+        foreach (var parameter in self.Parameters)
+            reference.Parameters.Add(new ParameterDefinition(parameter.ParameterType));
+
+        foreach (var parameter in self.GenericParameters)
+            reference.GenericParameters.Add(new GenericParameter(parameter.Name, reference));
+
+        return reference;
     }
 }

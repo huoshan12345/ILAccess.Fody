@@ -47,7 +47,7 @@ public partial class ILAccessorTestCases
     [FakeFact]
     public void GenericType_Ctor_GenericAccessors_NoParams()
     {
-        var obj = GenericAccessors<string>.Ctor();
+        var obj = GenericTestModelAccessors<string>.Ctor();
         Assert.NotNull(obj);
 
         Assert.NotEqual(default, obj._d);
@@ -61,7 +61,7 @@ public partial class ILAccessorTestCases
         var i = 42;
         var s = "Hello, World!";
         var d = 3.14d;
-        var obj = GenericAccessors<string>.Ctor(i, s, ref d);
+        var obj = GenericTestModelAccessors<string>.Ctor(i, s, ref d);
         Assert.NotNull(obj);
         Assert.Equal(i, obj._i);
         Assert.Equal(s, obj._s);
@@ -75,7 +75,7 @@ public partial class ILAccessorTestCases
         var s = "Hello, World!";
         var d = 3.14d;
         var obj = RuntimeHelpers.GetUninitializedObject<TestModel<string>>();
-        GenericAccessors<string>.CtorAsMethod(obj, i, s, ref d);
+        GenericTestModelAccessors<string>.CtorAsMethod(obj, i, s, ref d);
 
         Assert.NotNull(obj);
         Assert.Equal(i, obj._i);

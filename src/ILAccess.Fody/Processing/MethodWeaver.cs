@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using System.Reflection;
+using Mono.Collections.Generic;
 using MoreFodyHelpers.Building;
+using MoreFodyHelpers.Extensions;
 using MoreFodyHelpers.Support;
 
 namespace ILAccess.Fody.Processing;
@@ -96,13 +98,13 @@ internal sealed class MethodWeaver
 
         if (typeRef is GenericInstanceType genericType)
         {
-            if (genericType.GenericArguments.Count < genericType.GenericParameters.Count)
-            {
-                foreach (var parameter in genericType.GenericParameters)
-                {
-                    genericType.GenericArguments.Add(parameter);
-                }
-            }
+            //if (genericType.GenericArguments.Count < genericType.GenericParameters.Count)
+            //{
+            //    foreach (var parameter in genericType.GenericParameters)
+            //    {
+            //        genericType.GenericArguments.Add(parameter);
+            //    }
+            //}
             //else if (genericType.ContainsGenericParameter)
             //{
             //    foreach (var argument in genericType.GenericArguments)
@@ -133,10 +135,11 @@ internal sealed class MethodWeaver
                     : _method.Parameters.Skip(1);
                 var parameterTypes = paras.Select(p => p.ParameterType).ToArray();
                 var method = _context.FindMethod(type, name, parameterTypes, isCtor || isCtorMethod, isStatic);
+
                 var methodRef = _context.Module.ImportReference(method);
 
                 //// Important - setting the method declaring type to the correct instantiated type
-                // methodRef.DeclaringType = typeRef;
+                methodRef.DeclaringType = typeRef;
 
                 var start = isStatic ? 1 : 0;
                 for (var i = start; i < _method.Parameters.Count; i++)
