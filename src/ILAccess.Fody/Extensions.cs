@@ -1,11 +1,19 @@
 using System.IO;
-using Mono.Cecil.Rocks;
-using MoreFodyHelpers.Building;
+using System.Reflection;
+using static System.Reflection.BindingFlags;
+using MethodAttributes = Mono.Cecil.MethodAttributes;
+using TypeAttributes = Mono.Cecil.TypeAttributes;
 
 namespace ILAccess.Fody;
 
 public static class Extensions
 {
+    public static PropertyInfo GetRequiredProperty(this Type type, string name)
+    {
+        return type.GetProperty(name, Public | NonPublic | Instance | Static)
+               ?? throw new InvalidOperationException($"Cannot find property '{name}' in type '{type.FullName}'");
+    }
+
     public static TypeDefinition GetOrAddIgnoresAccessChecksToAttribute(this ModuleWeavingContext context)
     {
         var module = context.Module;
@@ -89,22 +97,11 @@ public static class Extensions
         }
     }
 
-    // https://stackoverflow.com/a/16433452/613130
-    public static MethodReference MakeHostInstanceGeneric(this MethodReference self, params TypeReference[] arguments)
+
+    private static readonly PropertyInfo _propertyMetadataImporter = typeof(ModuleDefinition).GetRequiredProperty("MetadataImporter");
+
+    public static IMetadataImporter GetMetadataImporter(this ModuleDefinition module)
     {
-        var reference = new MethodReference(self.Name, self.ReturnType, self.DeclaringType.MakeGenericInstanceType(arguments))
-        {
-            HasThis = self.HasThis,
-            ExplicitThis = self.ExplicitThis,
-            CallingConvention = self.CallingConvention
-        };
-
-        foreach (var parameter in self.Parameters)
-            reference.Parameters.Add(new ParameterDefinition(parameter.ParameterType));
-
-        foreach (var parameter in self.GenericParameters)
-            reference.GenericParameters.Add(new GenericParameter(parameter.Name, reference));
-
-        return reference;
+        return (IMetadataImporter)_propertyMetadataImporter.GetValue(module);
     }
 }

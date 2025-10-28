@@ -1,8 +1,6 @@
 ﻿using System.IO;
 using System.Reflection;
-using Mono.Collections.Generic;
 using MoreFodyHelpers.Building;
-using MoreFodyHelpers.Extensions;
 using MoreFodyHelpers.Support;
 
 namespace ILAccess.Fody.Processing;
@@ -96,27 +94,6 @@ internal sealed class MethodWeaver
             typeRef = _method.Parameters[0].ParameterType;
         }
 
-        if (typeRef is GenericInstanceType genericType)
-        {
-            //if (genericType.GenericArguments.Count < genericType.GenericParameters.Count)
-            //{
-            //    foreach (var parameter in genericType.GenericParameters)
-            //    {
-            //        genericType.GenericArguments.Add(parameter);
-            //    }
-            //}
-            //else if (genericType.ContainsGenericParameter)
-            //{
-            //    foreach (var argument in genericType.GenericArguments)
-            //    {
-            //        if (argument is GenericParameter gp)
-            //        {
-            //            genericType.GenericParameters.Add(gp);
-            //        }
-            //    }
-            //}
-        }
-
         var type = typeRef.Resolve();
 
         var isReturnRef = _method.ReturnType.IsByReference;
@@ -136,9 +113,12 @@ internal sealed class MethodWeaver
                 var parameterTypes = paras.Select(p => p.ParameterType).ToArray();
                 var method = _context.FindMethod(type, name, parameterTypes, isCtor || isCtorMethod, isStatic);
 
-                var methodRef = _context.Module.ImportReference(method);
+                // do not use _context.Module.ImportReference(method); here because it won't do anything when method is from the same module.
+                var importer = _context.Module.GetMetadataImporter();
+                var methodRef = importer.ImportReference(method, null);
 
-                //// Important - setting the method declaring type to the correct instantiated type
+                // after importing, the DeclaringType will be an open generic type.
+                // so needs to set the method declaring type to the correct instantiated type.
                 methodRef.DeclaringType = typeRef;
 
                 var start = isStatic ? 1 : 0;
