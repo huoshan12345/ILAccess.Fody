@@ -47,12 +47,13 @@ public class TestModel
     public int PublicPropertyWithPrivateGetter { private get; set; } = _start++;
     public int PublicPropertyWithoutSetter { get; } = _start++;
 
-    internal TestModel() { }
 
     private static readonly Random _random = new(0);
-    internal readonly int _i = _random.Next(100, 1000);
-    internal readonly string _s = _random.NextString(10);
-    internal readonly double _d = _random.NextDouble();
+    protected internal readonly int _i = _random.Next(100, 1000);
+    protected internal readonly string _s = _random.NextString(10);
+    protected internal readonly double _d = _random.NextDouble();
+
+    internal TestModel() { }
 
     internal TestModel(int i, string s, ref double rd)
     {
