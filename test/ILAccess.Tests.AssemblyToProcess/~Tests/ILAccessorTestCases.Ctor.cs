@@ -47,7 +47,7 @@ public partial class ILAccessorTestCases
     {
         var ex = ExceptionAccessors.Ctor();
         Assert.NotNull(ex);
-        Assert.Empty(ex.Message);
+        Assert.Equal("Exception of type 'System.Exception' was thrown.", ex.Message);
     }
 
     [FakeFact]
