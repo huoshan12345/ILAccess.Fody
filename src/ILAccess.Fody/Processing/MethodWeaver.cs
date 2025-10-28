@@ -96,16 +96,23 @@ internal sealed class MethodWeaver
 
         if (typeRef is GenericInstanceType genericType)
         {
-            var gArgLen = genericType.GenericArguments.Count;
-            var gParaLen = genericType.GenericParameters.Count;
-
-            if (gArgLen < gParaLen)
+            if (genericType.GenericArguments.Count < genericType.GenericParameters.Count)
             {
                 foreach (var parameter in genericType.GenericParameters)
                 {
                     genericType.GenericArguments.Add(parameter);
                 }
             }
+            //else if (genericType.ContainsGenericParameter)
+            //{
+            //    foreach (var argument in genericType.GenericArguments)
+            //    {
+            //        if (argument is GenericParameter gp)
+            //        {
+            //            genericType.GenericParameters.Add(gp);
+            //        }
+            //    }
+            //}
         }
 
         var type = typeRef.Resolve();

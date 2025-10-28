@@ -32,6 +32,15 @@ public class TestModel<T> : TestModel
     public new T? PublicField;
 }
 
+partial class Accessors
+{
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern TestModel<T> Ctor<T>();
+
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern TestModel<T> Ctor<T>(int i, string s, ref double rf);
+}
+
 public static class GenericAccessors<T>
 {
     [ILAccessor(ILAccessorKind.StaticField, Name = "PrivateStaticField")]
@@ -63,6 +72,9 @@ public static class GenericAccessors<T>
 
     [ILAccessor(ILAccessorKind.Constructor)]
     public static extern TestModel<T> Ctor(int i, string s, ref double rf);
+
+    [ILAccessor(ILAccessorKind.Method, Name = ".ctor")]
+    public static extern void PrivateCtorAsMethod(TestModel<T> c, int i, string s, ref double rf);
 }
 
 public static partial class GenericTestModelExtensions
