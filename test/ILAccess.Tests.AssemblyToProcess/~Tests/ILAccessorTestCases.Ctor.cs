@@ -8,7 +8,7 @@ namespace ILAccess.Tests.AssemblyToProcess;
 
 public partial class ILAccessorTestCases
 {
-    [Fact]
+    [FakeFact]
     public void Ctor_NoParams()
     {
         var obj = Accessors.Ctor();
@@ -19,7 +19,7 @@ public partial class ILAccessorTestCases
         Assert.NotEqual(default, obj._s);
     }
 
-    [Fact]
+    [FakeFact]
     public void Ctor_WithParams()
     {
         var i = 42;
@@ -32,7 +32,7 @@ public partial class ILAccessorTestCases
         Assert.Equal(d, obj._d);
     }
 
-    [Fact]
+    [FakeFact]
     public void Ctor_AsMethod()
     {
         var i = 42;
