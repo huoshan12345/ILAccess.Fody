@@ -4,7 +4,7 @@ namespace ILAccess.Tests.AssemblyToProcess;
 
 public partial class ILAccessorTestCases
 {
-    [Fact]
+    [FakeFact]
     public void PublicStaticField_T_Get()
     {
         var random = new Random(0);
@@ -24,7 +24,7 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [Fact]
+    [FakeFact]
     public void PrivateStaticField_T_Get()
     {
         var random = new Random(0);
@@ -44,7 +44,7 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [Fact]
+    [FakeFact]
     public void PublicField_T_Get()
     {
         var random = new Random(0);
@@ -53,7 +53,7 @@ public partial class ILAccessorTestCases
         Assert.Equal(obj.PublicField, value);
     }
 
-    [Fact]
+    [FakeFact]
     public void PrivateField_T_Get()
     {
         var random = new Random(0);
@@ -73,7 +73,7 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [Fact]
+    [FakeFact]
     public void RefPublicStaticField_T_Get_Set()
     {
         var random = new Random(0);
@@ -98,7 +98,7 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [Fact]
+    [FakeFact]
     public void RefPrivateStaticField_T_Get_Set()
     {
         var random = new Random(0);
@@ -123,7 +123,7 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [Fact]
+    [FakeFact]
     public void RefPublicField_T_Get_Set()
     {
         var random = new Random(0);
@@ -137,7 +137,7 @@ public partial class ILAccessorTestCases
         Assert.Equal(newValue, obj.RefPublicField());
     }
 
-    [Fact]
+    [FakeFact]
     public void RefPrivateField_T_Get_Set()
     {
         var random = new Random(0);
@@ -163,7 +163,7 @@ public partial class ILAccessorTestCases
     }
 
 
-    [Fact]
+    [FakeFact]
     public void PublicStaticField_T_GenericAccessors_Get()
     {
         var random = new Random(0);
@@ -183,7 +183,7 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [Fact]
+    [FakeFact]
     public void PrivateStaticField_T_GenericAccessors_Get()
     {
         var random = new Random(0);
@@ -203,7 +203,7 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [Fact]
+    [FakeFact]
     public void PublicField_T_GenericAccessors_Get()
     {
         var random = new Random(0);
@@ -212,7 +212,7 @@ public partial class ILAccessorTestCases
         Assert.Equal(obj.PublicField, value);
     }
 
-    [Fact]
+    [FakeFact]
     public void PrivateField_T_GenericAccessors_Get()
     {
         var random = new Random(0);
@@ -232,7 +232,7 @@ public partial class ILAccessorTestCases
         }
     }
     
-    [Fact]
+    [FakeFact]
     public void RefPublicStaticField_T_GenericAccessors_Get_Set()
     {
         var random = new Random(0);
@@ -257,7 +257,7 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [Fact]
+    [FakeFact]
     public void RefPrivateStaticField_T_GenericAccessors_Get_Set()
     {
         var random = new Random(0);
@@ -282,7 +282,7 @@ public partial class ILAccessorTestCases
         }
     }
 
-    [Fact]
+    [FakeFact]
     public void RefPublicField_T_GenericAccessors_Get_Set()
     {
         var random = new Random(0);
@@ -296,7 +296,7 @@ public partial class ILAccessorTestCases
         Assert.Equal(newValue, obj.RefPublicField_GenericAccessors());
     }
 
-    [Fact]
+    [FakeFact]
     public void RefPrivateField_T_GenericAccessors_Get_Set()
     {
         var random = new Random(0);
