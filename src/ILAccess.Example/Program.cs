@@ -55,33 +55,79 @@ public static class Accessors
     public static extern TestModel NewTestModel(int x);
 }
 
+public class TestModel<T>
+{
+    private static readonly Random _random = new(0);
+    protected internal readonly int _i = _random.Next(100, 1000);
+    protected internal readonly string _s = "xxxxxxxxxxx";
+    protected internal readonly double _d = _random.NextDouble();
+
+    internal TestModel() { }
+
+    internal TestModel(int i, string s, ref double rd)
+    {
+        _i = i;
+        _s = s;
+        _d = rd;
+    }
+}
+
+public static class Accessors<T>
+{
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern TestModel<T> New();
+
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern TestModel<T> New(int i, string s, ref double rf);
+}
+
+public static class TestModelExtensions
+{
+    [ILAccessor(ILAccessorKind.Method, Name = ".ctor")]
+    public static extern void PrivateCtorAsMethod<T>(this TestModel<T> c, int i, string s, ref double rf);
+}
+
 internal class Program
 {
     private static void Main(string[] args)
     {
-        var model = Accessors.NewTestModel(100);
-        ref var value = ref Accessors.Value(model);
-        Console.WriteLine($"_value: {value}");
+        {
+            var model = Accessors.NewTestModel(100);
+            ref var value = ref Accessors.Value(model);
+            Console.WriteLine($"_value: {value}");
 
-        value += 50;
-        Console.WriteLine($"_value updated: {value}");
+            value += 50;
+            Console.WriteLine($"_value updated: {value}");
 
-        ref var staticValue = ref Accessors.StaticValue(model);
-        Console.WriteLine($"_staticValue: {staticValue}");
-        staticValue += 10;
-        Console.WriteLine($"_staticValue updated: {staticValue}");
+            ref var staticValue = ref Accessors.StaticValue(model);
+            Console.WriteLine($"_staticValue: {staticValue}");
+            staticValue += 10;
+            Console.WriteLine($"_staticValue updated: {staticValue}");
 
-        var message = Accessors.GetMessage(model, 7);
-        Console.WriteLine($"GetMessage: {message}");
+            var message = Accessors.GetMessage(model, 7);
+            Console.WriteLine($"GetMessage: {message}");
 
-        var staticMessage = Accessors.GetStaticMessage(null, 7);
-        Console.WriteLine($"GetStaticMessage: {message}");
+            var staticMessage = Accessors.GetStaticMessage(null, 7);
+            Console.WriteLine($"GetStaticMessage: {message}");
+        }
 
+        {
+            var model = Accessors<string>.New();
+            Console.WriteLine($"_i: {model._i}");
+        }
+
+
+        Console.WriteLine();
         Console.WriteLine("Testing Exception accessors");
         ExceptionAccessors.Test();
 
+        Console.WriteLine();
         Console.WriteLine("Testing List<T> accessors");
         ListAccessors.Test();
+
+        Console.WriteLine();
+        Console.WriteLine("Testing List<T> accessors<T>");
+        ListAccessors<int>.Test();
 
         Console.Read();
     }
@@ -113,6 +159,33 @@ public static class ExceptionAccessors
         Console.WriteLine($"StackTrace: {ex.StackTrace}");
         Console.WriteLine($"GetStackTrace: {ex.GetStackTrace()}");
         Console.WriteLine($"GetBaseException: {ex.GetBaseException()}");
+    }
+}
+
+public static class ListAccessors<T>
+{
+    [ILAccessor(ILAccessorKind.Field, Name = "_items")]
+    public static extern ref T[] Items(List<T> obj);
+
+    [ILAccessor(ILAccessorKind.Method, Name = "Grow")]
+    public static extern void Grow(List<T> obj, int capacity);
+
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern List<T> New();
+
+    public static void Test()
+    {
+        var list = ListAccessors<string>.New();
+        list.Add("xxxxxxxxxxx");
+        Console.WriteLine($"List[0]: {list[0]}");
+
+        ref var items = ref ListAccessors<string>.Items(list);
+        items[0] = "yyyyyy";
+        Console.WriteLine($"List[0] after set items: {list[0]}");
+
+        Console.WriteLine($"Capacity: {list.Capacity}");
+        ListAccessors<string>.Grow(list, 100);
+        Console.WriteLine($"Capacity after Grow: {list.Capacity}");
     }
 }
 
