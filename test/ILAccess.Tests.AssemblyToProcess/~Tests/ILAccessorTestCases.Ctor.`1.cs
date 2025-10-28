@@ -6,7 +6,7 @@ namespace ILAccess.Tests.AssemblyToProcess;
 public partial class ILAccessorTestCases
 {
     [FakeFact]
-    public void Ctor_T_NoParams()
+    public void GenericType_Ctor_NoParams()
     {
         var obj = Accessors.Ctor<string>();
         Assert.NotNull(obj);
@@ -17,7 +17,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void Ctor_T_WithParams()
+    public void GenericType_Ctor_WithParams()
     {
         var i = 42;
         var s = "Hello, World!";
@@ -30,7 +30,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void Ctor_T_AsMethod()
+    public void GenericType_Ctor_AsMethod()
     {
         var i = 42;
         var s = "Hello, World!";
@@ -45,7 +45,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void Ctor_T_GenericAccessors_NoParams()
+    public void GenericType_Ctor_GenericAccessors_NoParams()
     {
         var obj = GenericAccessors<string>.Ctor();
         Assert.NotNull(obj);
@@ -56,7 +56,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void Ctor_T_GenericAccessors_WithParams()
+    public void GenericType_Ctor_GenericAccessors_WithParams()
     {
         var i = 42;
         var s = "Hello, World!";
@@ -69,7 +69,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void Ctor_T_GenericAccessors_AsMethod()
+    public void GenericType_Ctor_GenericAccessors_AsMethod()
     {
         var i = 42;
         var s = "Hello, World!";

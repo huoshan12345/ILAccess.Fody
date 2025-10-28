@@ -5,7 +5,7 @@ namespace ILAccess.Tests.AssemblyToProcess;
 public partial class ILAccessorTestCases
 {
     [FakeFact]
-    public void PublicStaticField_T_Get()
+    public void GenericType_PublicStaticField_Get()
     {
         var random = new Random(0);
         var obj = new TestModel<string>();
@@ -25,7 +25,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void PrivateStaticField_T_Get()
+    public void GenericType_PrivateStaticField_Get()
     {
         var random = new Random(0);
         var obj = new TestModel<string>();
@@ -45,7 +45,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void PublicField_T_Get()
+    public void GenericType_PublicField_Get()
     {
         var random = new Random(0);
         var obj = new TestModel<string> { PublicField = random.NextString(10) };
@@ -54,7 +54,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void PrivateField_T_Get()
+    public void GenericType_PrivateField_Get()
     {
         var random = new Random(0);
         var obj = new TestModel<string>();
@@ -74,7 +74,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void RefPublicStaticField_T_Get_Set()
+    public void GenericType_RefPublicStaticField_Get_Set()
     {
         var random = new Random(0);
         var obj = new TestModel<string>();
@@ -99,7 +99,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void RefPrivateStaticField_T_Get_Set()
+    public void GenericType_RefPrivateStaticField_Get_Set()
     {
         var random = new Random(0);
         var obj = new TestModel<string>();
@@ -124,7 +124,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void RefPublicField_T_Get_Set()
+    public void GenericType_RefPublicField_Get_Set()
     {
         var random = new Random(0);
         var obj = new TestModel<string> { PublicField = random.NextString(10) };
@@ -138,7 +138,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void RefPrivateField_T_Get_Set()
+    public void GenericType_RefPrivateField_Get_Set()
     {
         var random = new Random(0);
         var obj = new TestModel<string>();
@@ -161,10 +161,9 @@ public partial class ILAccessorTestCases
             typeof(TestModel<string>).GetRequiredField("PrivateField").SetValue(obj, value);
         }
     }
-
-
+    
     [FakeFact]
-    public void PublicStaticField_T_GenericAccessors_Get()
+    public void GenericType_PublicStaticField_GenericAccessors_Get()
     {
         var random = new Random(0);
         var obj = new TestModel<string>();
@@ -184,7 +183,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void PrivateStaticField_T_GenericAccessors_Get()
+    public void GenericType_PrivateStaticField_GenericAccessors_Get()
     {
         var random = new Random(0);
         var obj = new TestModel<string>();
@@ -204,7 +203,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void PublicField_T_GenericAccessors_Get()
+    public void GenericType_PublicField_GenericAccessors_Get()
     {
         var random = new Random(0);
         var obj = new TestModel<string> { PublicField = random.NextString(10) };
@@ -213,7 +212,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void PrivateField_T_GenericAccessors_Get()
+    public void GenericType_PrivateField_GenericAccessors_Get()
     {
         var random = new Random(0);
         var obj = new TestModel<string>();
@@ -233,7 +232,7 @@ public partial class ILAccessorTestCases
     }
     
     [FakeFact]
-    public void RefPublicStaticField_T_GenericAccessors_Get_Set()
+    public void GenericType_RefPublicStaticField_GenericAccessors_Get_Set()
     {
         var random = new Random(0);
         var obj = new TestModel<string>();
@@ -258,7 +257,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void RefPrivateStaticField_T_GenericAccessors_Get_Set()
+    public void GenericType_RefPrivateStaticField_GenericAccessors_Get_Set()
     {
         var random = new Random(0);
         var obj = new TestModel<string>();
@@ -283,7 +282,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void RefPublicField_T_GenericAccessors_Get_Set()
+    public void GenericType_RefPublicField_GenericAccessors_Get_Set()
     {
         var random = new Random(0);
         var obj = new TestModel<string> { PublicField = random.NextString(10) };
@@ -297,7 +296,7 @@ public partial class ILAccessorTestCases
     }
 
     [FakeFact]
-    public void RefPrivateField_T_GenericAccessors_Get_Set()
+    public void GenericType_RefPrivateField_GenericAccessors_Get_Set()
     {
         var random = new Random(0);
         var obj = new TestModel<string>();
