@@ -94,12 +94,17 @@ internal sealed class MethodWeaver
             typeRef = _method.Parameters[0].ParameterType;
         }
 
-        if (typeRef.HasGenericParameters)
+        if (typeRef is GenericInstanceType genericType)
         {
-            var genericType = (GenericInstanceType)typeRef;
-            foreach (var parameter in typeRef.GenericParameters)
+            var gArgLen = genericType.GenericArguments.Count;
+            var gParaLen = genericType.GenericParameters.Count;
+
+            if (gArgLen < gParaLen)
             {
-                genericType.GenericArguments.Add(parameter);
+                foreach (var parameter in genericType.GenericParameters)
+                {
+                    genericType.GenericArguments.Add(parameter);
+                }
             }
         }
 
@@ -121,6 +126,10 @@ internal sealed class MethodWeaver
                     : _method.Parameters.Skip(1);
                 var parameterTypes = paras.Select(p => p.ParameterType).ToArray();
                 var method = _context.FindMethod(type, name, parameterTypes, isCtor || isCtorMethod, isStatic);
+                var methodRef = _context.Module.ImportReference(method);
+
+                // Important - setting the method declaring type to the correct instantiated type
+                methodRef.DeclaringType = typeRef;
 
                 var start = isStatic ? 1 : 0;
                 for (var i = start; i < _method.Parameters.Count; i++)
@@ -135,7 +144,7 @@ internal sealed class MethodWeaver
                     _ => OpCodes.Callvirt,
                 };
 
-                _il.IL.Append(_il.Create(callCode, _context.Module.ImportReference(method)));
+                _il.IL.Append(_il.Create(callCode, methodRef));
                 _il.IL.Append(_il.Create(OpCodes.Ret));
 
                 assemblyName = method.Module.Assembly.Name.Name;

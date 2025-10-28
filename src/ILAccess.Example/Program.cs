@@ -124,12 +124,23 @@ public static class ListAccessors
     [ILAccessor(ILAccessorKind.Method, Name = "Grow")]
     public static extern void Grow<T>(this List<T> obj, int capacity);
 
+    [ILAccessor(ILAccessorKind.Constructor)]
+    public static extern List<T> New<T>();
+
+    public static void Add<T>(this List<T> obj, T item)
+    {
+        obj.Add(item);
+    }
+
     public static void Test()
     {
-        var list = new List<string> { "xxxxxx" };
+        var list = New<string>();
+        list.Add("xxxxxxxxxxx");
+        Console.WriteLine($"List[0]: {list[0]}");
+
         ref var items = ref list.Items();
         items[0] = "yyyyyy";
-        Console.WriteLine($"List[0]: {list[0]}");
+        Console.WriteLine($"List[0] after set items: {list[0]}");
 
         Console.WriteLine($"Capacity: {list.Capacity}");
         list.Grow(100);
