@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Reflection;
+using ILAccess.Fody.Support;
 using MoreFodyHelpers.Building;
 using MoreFodyHelpers.Support;
 
@@ -110,8 +111,9 @@ internal sealed class MethodWeaver
                 var paras = isCtor
                     ? _method.Parameters
                     : _method.Parameters.Skip(1);
-                var parameterTypes = paras.Select(p => p.ParameterType).ToArray();
-                var method = _context.FindMethod(type, name, parameterTypes, isCtor || isCtorMethod, isStatic);
+                var paramTypes = paras.Select(p => p.ParameterType).ToArray();
+                var method = _context.FindMethod(type, name, _method.GenericParameters.Count, paramTypes, isCtor || isCtorMethod, isStatic);
+
 
                 // do not use _context.Module.ImportReference(method); here because it won't do anything when method is from the same module.
                 var importer = _context.Module.GetMetadataImporter();
@@ -119,7 +121,13 @@ internal sealed class MethodWeaver
 
                 // after importing, the DeclaringType will be an open generic type.
                 // so needs to set the method declaring type to the correct instantiated type.
+                // set the DeclaringType before MakeGenericMethod, because GenericInstanceMethod does not allow to set DeclaringType.
                 methodRef.DeclaringType = typeRef;
+
+                if (methodRef.HasGenericParameters)
+                {
+                    methodRef = methodRef.MakeGenericMethod(methodRef.GenericParameters);
+                }
 
                 var start = isStatic ? 1 : 0;
                 for (var i = start; i < _method.Parameters.Count; i++)
@@ -260,7 +268,8 @@ file static class Extensions
         referenceDictionary[AssemblyNames.SystemPrivateCoreLib] = lib;
     }
 
-    public static MethodDefinition FindMethod(this ModuleWeavingContext context, TypeDefinition typeDef, string? name, IReadOnlyList<TypeReference> parameterTypes, bool isCtor, bool isStatic)
+    public static MethodDefinition FindMethod(this ModuleWeavingContext context, TypeDefinition typeDef, string? name, int genericParamCount,
+        IReadOnlyList<TypeReference> paramTypes, bool isCtor, bool isStatic)
     {
         var methods = GetMethods(typeDef);
         // ReSharper disable once InvertIf
@@ -275,11 +284,11 @@ file static class Extensions
         if (methods.Length == 1)
             return methods[0];
 
-        var paraTypeNames = parameterTypes.Select(m => m.Name).JoinWith(", ");
+        var paramTypeNames = paramTypes.Select(m => m.Name).JoinWith(", ");
         throw methods.Length switch
         {
-            0 => new WeavingException($"Method '{name}({paraTypeNames})' not found on type '{typeDef.FullName}'."),
-            _ => new WeavingException($"{methods.Length} methods '{name}({paraTypeNames})' found on type '{typeDef.FullName}'.")
+            0 => new WeavingException($"Method '{name}({paramTypeNames})' not found on type '{typeDef.FullName}'."),
+            _ => new WeavingException($"{methods.Length} methods '{name}({paramTypeNames})' found on type '{typeDef.FullName}'.")
         };
 
         MethodDefinition[] GetMethods(TypeDefinition def)
@@ -288,9 +297,59 @@ file static class Extensions
                 .Where(m => m.IsStatic == isStatic
                             && m.IsConstructor == isCtor
                             && (isCtor == false && m.Name == name || isCtor)
-                            && m.Parameters.Select(x => x.ParameterType)
-                                .SequenceEqual(parameterTypes, TypeReferenceEqualityComparer.Instance))
+                            && (m.GenericParameters.Count == genericParamCount
+                                || m.GenericParameters.Count == genericParamCount - def.GenericParameters.Count)
+                            && Match(m))
                 .ToArray();
+        }
+
+        bool Match(MethodDefinition method)
+        {
+            if (method.Parameters.Count != paramTypes.Count)
+                return false;
+
+            var comparer = TypeReferenceEqualityComparer.Instance;
+            foreach (var (t1, t2) in method.Parameters.Select(m => m.ParameterType).Zip(paramTypes))
+            {
+                if (Equals(t1, t2))
+                    continue;
+
+                return false;
+            }
+
+            return true;
+
+            bool Equals(TypeReference t1, TypeReference t2)
+            {
+                if (comparer.Equals(t1, t2))
+                    return true;
+
+                switch (t1, t2)
+                {
+                    case (GenericInstanceType gt1, GenericInstanceType gt2):
+                    {
+                        if (comparer.Equals(gt1.ElementType, gt2.ElementType) == false)
+                            return false;
+
+                        var gas1 = gt1.GenericArguments;
+                        var gas2 = gt2.GenericArguments;
+                        if (gas1.Count != gas2.Count)
+                            return false;
+
+                        foreach (var (ga1, ga2) in gas1.Zip(gas2))
+                        {
+                            if (Equals(ga1, ga2))
+                                continue;
+
+                            return false;
+                        }
+
+                        return true;
+                    }
+                    case (GenericParameter, GenericParameter): return true;
+                    default: return false;
+                }
+            }
         }
     }
 

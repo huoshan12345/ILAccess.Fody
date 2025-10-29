@@ -14,6 +14,7 @@ using System.Text;
 // ReSharper disable UnusedParameter.Local
 // ReSharper disable UnusedMember.Global
 // ReSharper disable UnusedVariable
+// ReSharper disable once MemberCanBeMadeStatic.Local
 #pragma warning disable CS0169 // Field is never used
 #pragma warning disable IDE0044 // Add readonly modifier
 #pragma warning disable IDE0051 // Remove unused private members
@@ -31,10 +32,9 @@ public class TestModel
     private static int _staticValue = 42;
     private int _value;
     private TestModel(int value) => _value = value;
-    private string GetMessage(int code)
-        => $"Current value: {_value}, code: {code}";
-    private static string GetStaticMessage(int code)
-        => $"Current static value: {_staticValue}, code: {code}";
+    private string GetMessage(int code) => $"Current value: {_value}, code: {code}";
+    private static string GetStaticMessage(int code) => $"Current static value: {_staticValue}, code: {code}";
+    internal string GetString<T>(T item) => item?.ToString() ?? "";
 }
 
 public static class TestModelAccessors
@@ -53,6 +53,14 @@ public static class TestModelAccessors
 
     [ILAccessor(ILAccessorKind.Constructor)]
     public static extern TestModel Ctor(int x);
+
+    [ILAccessor(ILAccessorKind.Method, Name = "GetString")]
+    public static extern string GetString<T>(this TestModel c, T item);
+
+    public static string GetString2<T>(this TestModel c, T item)
+    {
+        return c.GetString(item);
+    }
 }
 
 public class TestModel<T>
@@ -109,6 +117,15 @@ internal class Program
 
             var staticMessage = TestModelAccessors.GetStaticMessage(null, 7);
             Console.WriteLine($"GetStaticMessage: {message}");
+
+            {
+                var str = model.GetString(12345);
+                Console.WriteLine($"GetString<int>: {str}");
+            }
+            {
+                var str = model.GetString("xyz");
+                Console.WriteLine($"GetString<string>: {str}");
+            }
         }
 
         {

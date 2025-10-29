@@ -1,7 +1,7 @@
-﻿using System.IO;
+﻿using ILAccess.Fody.Support;
 using MoreFodyHelpers.Support;
 
-namespace ILAccess.Fody;
+namespace ILAccess.Fody.Processing;
 
 public class ModuleWeaver : BaseModuleWeaver
 {

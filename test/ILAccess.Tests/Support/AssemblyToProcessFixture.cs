@@ -1,4 +1,5 @@
-﻿using MoreFodyHelpers;
+﻿using ILAccess.Fody.Processing;
+using MoreFodyHelpers;
 
 #pragma warning disable 618
 

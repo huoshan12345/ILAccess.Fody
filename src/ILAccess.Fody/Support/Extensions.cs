@@ -4,7 +4,7 @@ using static System.Reflection.BindingFlags;
 using MethodAttributes = Mono.Cecil.MethodAttributes;
 using TypeAttributes = Mono.Cecil.TypeAttributes;
 
-namespace ILAccess.Fody;
+namespace ILAccess.Fody.Support;
 
 public static class Extensions
 {
@@ -111,5 +111,10 @@ public static class Extensions
     public static IMetadataImporter GetMetadataImporter(this ModuleDefinition module)
     {
         return (IMetadataImporter)_propertyMetadataImporter.GetValue(module);
+    }
+
+    public static IEnumerable<(TFirst First, TSecond Second)> Zip<TFirst, TSecond>(this IEnumerable<TFirst> first, IEnumerable<TSecond> second)
+    {
+        return first.Zip(second, (f, s) => (f, s));
     }
 }
