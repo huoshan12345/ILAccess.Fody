@@ -13,7 +13,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
-    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.11.4" PrivateAssets="All" IsPinned="true" Justification="Must stick with version 17.11.4 to stay backward compatible - we don't ship this, but depend on the version installed with dotnet/msbuild" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.14.28" PrivateAssets="All" IsPinned="true" Justification="Must stick with version 17.11.4 to stay backward compatible - we don't ship this, but depend on the version installed with dotnet/msbuild" />
   </ItemGroup>
 
   <ItemGroup>
