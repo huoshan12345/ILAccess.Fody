@@ -42,7 +42,7 @@ public static class TestModelAccessors
     [ILAccessor(ILAccessorKind.Field, Name = "_value")]
     public static extern ref int Value(TestModel instance);
 
-    [ILAccessor(ILAccessorKind.Field, Name = "_staticValue")]
+    [ILAccessor(ILAccessorKind.StaticField, Name = "_staticValue")]
     public static extern ref int StaticValue(TestModel instance);
 
     [ILAccessor(ILAccessorKind.Method, Name = "GetMessage")]

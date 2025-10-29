@@ -143,7 +143,8 @@ internal sealed class MethodWeaver
             case ILAccessorKind.Field:
             case ILAccessorKind.StaticField:
             {
-                var field = _context.FindField(type, name);
+                var isStatic = kind == ILAccessorKind.StaticField;
+                var field = _context.FindField(type, name, isStatic);
                 var fieldRef = new FieldReference(field.Name, field.FieldType, typeRef);
 
                 if (field.IsStatic)
@@ -291,7 +292,7 @@ file static class Extensions
         }
     }
 
-    public static FieldDefinition FindField(this ModuleWeavingContext context, TypeDefinition typeDef, string? name)
+    public static FieldDefinition FindField(this ModuleWeavingContext context, TypeDefinition typeDef, string? name, bool isStatic)
     {
         var fields = GetFields(typeDef);
         // ReSharper disable once InvertIf
@@ -305,8 +306,8 @@ file static class Extensions
 
         return fields.Length switch
         {
-            0 => throw new WeavingException($"Field '{name}' not found on type '{typeDef.FullName}'."),
-            > 1 => throw new WeavingException($"Multiple fields named '{name}' found on type '{typeDef.FullName}'."),
+            0 => throw new WeavingException($"{(isStatic ? "Static field" : "Field")} '{name}' not found on type '{typeDef.FullName}'."),
+            > 1 => throw new WeavingException($"Multiple {(isStatic ? "static" : "")} fields named '{name}' found on type '{typeDef.FullName}'."),
             _ => fields[0],
         };
 
@@ -314,7 +315,7 @@ file static class Extensions
         FieldDefinition[] GetFields(TypeDefinition def)
         {
             return def.Fields
-                .Where(m => m.Name == name)
+                .Where(m => m.Name == name && m.IsStatic == isStatic)
                 .ToArray();
         }
     }
