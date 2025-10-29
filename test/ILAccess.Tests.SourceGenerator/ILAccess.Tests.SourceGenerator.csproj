@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- On Ubuntu, the latest available version is 4.12.0, so we cannot use 4.14.0 as we do on Windows.-->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="[4.12.0]" PrivateAssets="all"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="4.14.0" PrivateAssets="all"/>
+  </ItemGroup>
+
+</Project>

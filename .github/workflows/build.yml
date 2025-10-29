@@ -1,0 +1,79 @@
+name: Build
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  DOTNET_NOLOGO: 1
+  VERSION: 0.0.1
+  NUGET_APIKEY: ${{ secrets.NUGET_APIKEY }}
+  SOLUTION: ILAccess.Fody.slnx
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION }} -v q
+
+      - name: Test Debug
+        run: dotnet test ${{ env.SOLUTION }} --no-restore -c Debug
+
+      - name: Test Release
+        run: dotnet test ${{ env.SOLUTION }} --no-restore -c Release
+
+      - name: Test Report
+        uses: dorny/test-reporter@main
+        if: (success() || failure())
+        with:
+          name: Test Report
+          path: TestResults/**/*.trx
+          reporter: dotnet-trx
+          list-suites: failed
+          list-tests: failed
+
+      - name: NuGet Publish
+        if: ${{ github.ref == 'refs/heads/master' }}
+        shell: pwsh
+        run: |
+          ./build/pack.ps1
+
+      - name: Set variables
+        shell: pwsh
+        run: |
+          $ver = Get-Content -Path ./build/pkg.version
+          echo "VERSION=$ver" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+          echo $ver
+
+      - name: Create Tag
+        if: github.ref == 'refs/heads/master'
+        uses: joutvhu/create-tag@v1
+        with:
+          tag_name: ${{ env.VERSION }}
+          on_tag_exists: skip
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+
+      - name: Create Release
+        if: github.ref == 'refs/heads/master'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ env.VERSION }}
+          token: ${{ secrets.PAT }}
+          generateReleaseNotes: true
+          skipIfReleaseExists: true
+...

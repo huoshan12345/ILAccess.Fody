@@ -1,0 +1,27 @@
+<Project>
+  <PropertyGroup>
+    <SourceDir>$(MSBuildProjectDirectory)\obj\Generated</SourceDir>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(SourceDir)</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <Target Name="CleanSourceGeneratedFiles" BeforeTargets="DispatchToInnerBuilds">
+    <!--only exeuted once before every build-->
+    <ItemGroup>
+      <FilesToDelete Include="$(SourceDir)\**\*"/>
+    </ItemGroup>
+    <Delete Files="@(FilesToDelete)" ContinueOnError="true" />
+  </Target>
+
+  <ItemGroup>
+    <Content Include="$(SourceDir)\**\*$(DefaultLanguageSourceExtension)">
+      <!--this is the path that ends with source generator name -->
+      <FolderPath>$([System.IO.Directory]::GetParent(%(FullPath)))</FolderPath>
+      <!--this is the path that ends with source generator's assembly name-->
+      <ParentPath>$([System.IO.Directory]::GetParent(%(FolderPath)))</ParentPath>
+      <!--this is the source generator's assembly name-->
+      <ParentName>$([System.IO.Path]::GetFileName(%(ParentPath)))</ParentName>
+      <Link>Generated\%(ParentName)\%(FileName)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+</Project>

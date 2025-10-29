@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net9.0;</TargetFrameworks>
+    <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
+    <!--<DisableFody>true</DisableFody>-->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fody" Version="6.9.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ILAccess\ILAccess.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <_WeaverName>ILAccess.Fody</_WeaverName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <WeaverFiles Include="..\$(_WeaverName)\bin\$(Configuration)\netstandard2.0\$(_WeaverName).dll" />
+  </ItemGroup>
+
+  <Target Name="Show" AfterTargets="Build">
+    <!--<Message Text="ReferencePath: @(ReferencePath)" Importance="high" />-->
+  </Target>
+
+</Project>

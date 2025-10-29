@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <DisableFody>true</DisableFody>
+    <NoWarn>$(NoWarn);NU1903;MSB3277</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build.Framework" Version="17.14.28" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.11.4" PrivateAssets="All" IsPinned="true" Justification="Must stick with version 17.11.4 to stay backward compatible - we don't ship this, but depend on the version installed with dotnet/msbuild" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ILAccess.Example\ILAccess.Example.csproj" />
+    <ProjectReference Include="..\..\src\ILAccess.Fody\ILAccess.Fody.csproj" />
+  </ItemGroup>
+
+  <!--System.Runtime.Loader is only supported for net48 and above-->
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="FodyTasks">
+      <HintPath>lib\FodyTasks.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="lib\**\*.*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>%(Filename)%(Extension)</Link>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+
+</Project>

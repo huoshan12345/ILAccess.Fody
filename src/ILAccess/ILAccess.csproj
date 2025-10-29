@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <DebugType>embedded</DebugType>
+    <PackageId>ILAccess.Fody</PackageId>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fody" Version="6.9.3" PrivateAssets="none" />
+    <PackageReference Include="FodyPackaging" Version="6.9.3" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ILAccess.Fody\ILAccess.Fody.csproj" PrivateAssets="All" />
+  </ItemGroup>
+
+  <Import Project="..\MoreFodyHelpers.props" />
+
+</Project>

@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeReferences</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+  <Target Name="IncludeReferences">
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="$(OutputPath)\MoreFodyHelpers.dll" PackagePath="weaver" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net472;net8.0;net9.0</TargetFrameworks>
+    <DisableFody>true</DisableFody>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <!--to fix the error: "Could not load file or assembly 'System.Reflection.Metadata" when running tests on net472 using GitHub action-->
+    <PackageReference Include="System.Reflection.Metadata" Version="9.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ILAccess.Fody\ILAccess.Fody.csproj" />
+    <ProjectReference Include="..\..\src\ILAccess\ILAccess.csproj" />
+    <ProjectReference Include="..\ILAccess.Tests.AssemblyToProcess\ILAccess.Tests.AssemblyToProcess.csproj" />
+    <ProjectReference Include="..\ILAccess.Tests.InvalidAssemblyToProcess\ILAccess.Tests.InvalidAssemblyToProcess.csproj" />
+    <ProjectReference Include="..\ILAccess.Tests.SourceGenerator\ILAccess.Tests.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\ILAccess.Tests.StandardAssemblyToProcess\ILAccess.Tests.StandardAssemblyToProcess.csproj" />
+  </ItemGroup>
+
+  <Import Project="..\EmitGeneratedFiles.props" Condition=" '$(Configuration)' == 'Debug' AND $(GITHUB_ACTION) == '' AND '$(OS)' == 'Windows_NT' " />
+
+</Project>
