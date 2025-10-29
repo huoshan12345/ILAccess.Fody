@@ -2,7 +2,7 @@ name: send-event
 on:
   push:
     branches:
-      - master
+      - main
   pull_request_target:
     types:
       - assigned
