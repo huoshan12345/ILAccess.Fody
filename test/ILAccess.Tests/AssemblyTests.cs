@@ -10,8 +10,8 @@ public class AssemblyTests
     [Fact]
     public void ShouldNotReferenceValueTuple()
     {
-        // System.ValueTuple may cause issues in some configurations, avoid using it.
-
+        // System.ValueTuple may cause issues in some configurations, avoid using it in weavers.
+        // see https://github.com/Fody/Fody/pull/911/files
         using var fileStream = File.OpenRead(typeof(ModuleWeaver).Assembly.Location);
         using var peReader = new PEReader(fileStream);
         var metadataReader = peReader.GetMetadataReader();

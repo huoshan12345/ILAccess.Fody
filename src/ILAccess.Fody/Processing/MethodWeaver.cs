@@ -320,9 +320,11 @@ file static class Extensions
                 return false;
 
             var comparer = TypeReferenceEqualityComparer.Instance;
-            foreach (var (t1, t2) in method.Parameters.Select(m => m.ParameterType).Zip(paramTypes))
+
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach (var pair in method.Parameters.Select(m => m.ParameterType).Zip(paramTypes))
             {
-                if (Equals(t1, t2))
+                if (Equals(pair.Item1, pair.Item2))
                     continue;
 
                 return false;
@@ -335,31 +337,29 @@ file static class Extensions
                 if (comparer.Equals(t1, t2))
                     return true;
 
-                switch (t1, t2)
+                // NOTE: do not use switch on ValueTuple here.
+                // see https://github.com/Fody/Fody/pull/911/files
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (t1 is GenericInstanceType gt1 && t2 is GenericInstanceType gt2)
                 {
-                    case (GenericInstanceType gt1, GenericInstanceType gt2):
-                    {
-                        if (comparer.Equals(gt1.ElementType, gt2.ElementType) == false)
-                            return false;
+                    if (comparer.Equals(gt1.ElementType, gt2.ElementType) == false)
+                        return false;
 
-                        var gas1 = gt1.GenericArguments;
-                        var gas2 = gt2.GenericArguments;
-                        if (gas1.Count != gas2.Count)
-                            return false;
+                    var gas1 = gt1.GenericArguments;
+                    var gas2 = gt2.GenericArguments;
 
-                        foreach (var (ga1, ga2) in gas1.Zip(gas2))
-                        {
-                            if (Equals(ga1, ga2))
-                                continue;
+                    // ReSharper disable once ConvertIfStatementToReturnStatement
+                    if (gas1.Count != gas2.Count)
+                        return false;
 
-                            return false;
-                        }
-
-                        return true;
-                    }
-                    case (GenericParameter, GenericParameter): return true;
-                    default: return false;
+                    return gas1.Zip(gas2).All(pair => Equals(pair.Item1, pair.Item2));
                 }
+
+                // ReSharper disable once ConvertIfStatementToReturnStatement
+                if (t1 is GenericParameter && t2 is GenericParameter)
+                    return true;
+
+                return false;
             }
         }
     }
