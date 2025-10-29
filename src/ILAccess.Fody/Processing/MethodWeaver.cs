@@ -112,8 +112,8 @@ internal sealed class MethodWeaver
                     ? _method.Parameters
                     : _method.Parameters.Skip(1);
                 var paramTypes = paras.Select(p => p.ParameterType).ToArray();
-                var method = _context.FindMethod(type, name, _method.GenericParameters.Count, paramTypes, isCtor || isCtorMethod, isStatic);
-
+                var gParamCount = _method.GenericParameters.Count + _method.DeclaringType.GenericParameters.Count;
+                var method = _context.FindMethod(type, name, gParamCount, paramTypes, isCtor || isCtorMethod, isStatic);
 
                 // do not use _context.Module.ImportReference(method); here because it won't do anything when method is from the same module.
                 var importer = _context.Module.GetMetadataImporter();
@@ -268,7 +268,7 @@ file static class Extensions
         referenceDictionary[AssemblyNames.SystemPrivateCoreLib] = lib;
     }
 
-    public static MethodDefinition FindMethod(this ModuleWeavingContext context, TypeDefinition typeDef, string? name, int genericParamCount,
+    public static MethodDefinition FindMethod(this ModuleWeavingContext context, TypeDefinition typeDef, string? name, int gParamCount,
         IReadOnlyList<TypeReference> paramTypes, bool isCtor, bool isStatic)
     {
         var methods = GetMethods(typeDef);
@@ -297,13 +297,24 @@ file static class Extensions
                 .Where(m => m.IsStatic == isStatic
                             && m.IsConstructor == isCtor
                             && (isCtor == false && m.Name == name || isCtor)
-                            && (m.GenericParameters.Count == genericParamCount
-                                || m.GenericParameters.Count == genericParamCount - def.GenericParameters.Count)
-                            && Match(m))
+                            && MatchGenericParameters(m)
+                            && MatchParameters(m))
                 .ToArray();
         }
 
-        bool Match(MethodDefinition method)
+        bool MatchGenericParameters(MethodDefinition method)
+        {
+            var mgc = method.GenericParameters.Count;
+            if (mgc == 0)
+                return true;
+
+            if (mgc == gParamCount)
+                return true;
+
+            return false;
+        }
+
+        bool MatchParameters(MethodDefinition method)
         {
             if (method.Parameters.Count != paramTypes.Count)
                 return false;

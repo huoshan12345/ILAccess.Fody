@@ -34,5 +34,17 @@ public static class GenericTestModelAccessors<T>
 
     [ILAccessor(ILAccessorKind.Method, Name = ".ctor")]
     public static extern void CtorAsMethod(TestModel<T> c, int i, string s, ref double rf);
+
+    [ILAccessor(ILAccessorKind.Method, Name = "GetString")]
+    public static extern string GetString(TestModel c, T item);
+
+    //[ILAccessor(ILAccessorKind.Method, Name = "GetString")]
+    //public static extern string GetString<T1>(TestModel c, T1? item) where T1 : struct;
+
+    //[ILAccessor(ILAccessorKind.Method, Name = "GetString")]
+    //public static extern string GetString<T1, T2>(TestModel c, T1 item, T2 item2);
+
+    //[ILAccessor(ILAccessorKind.Method, Name = "GetString")]
+    //public static extern string GetString<T2>(TestModel c, T item, T2 item2);
 }
 

@@ -1,5 +1,4 @@
 ﻿// ReSharper disable ConvertToConstant.Local
-// ReSharper disable UnusedMember.Global
 
 namespace ILAccess.Tests.AssemblyToProcess;
 
