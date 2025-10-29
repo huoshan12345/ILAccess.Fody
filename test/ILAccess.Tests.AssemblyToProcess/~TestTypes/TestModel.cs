@@ -26,7 +26,7 @@ namespace ILAccess.Tests.AssemblyToProcess;
 
 public class TestModel
 {
-    private static int _start = 1;
+    internal static int _start = 1;
 
     private static int PrivateStaticField = _start++;
     public static int PublicStaticField = _start++;
@@ -47,7 +47,6 @@ public class TestModel
     public int PublicPropertyWithPrivateGetter { private get; set; } = _start++;
     public int PublicPropertyWithoutSetter { get; } = _start++;
 
-
     private static readonly Random _random = new(0);
     protected internal readonly int _i = _random.Next(100, 1000);
     protected internal readonly string _s = _random.NextString(10);
@@ -61,43 +60,50 @@ public class TestModel
         _s = s;
         _d = rd;
     }
-}
 
-public static partial class TestModelAccessors
-{
-    [ILAccessor(ILAccessorKind.StaticField, Name = "PrivateStaticField")]
-    public static extern int PrivateStaticField(this TestModel? c);
+    private (int, double) Plus(int i, double d)
+    {
+        return (_i + i, _d + d);
+    }
 
-    [ILAccessor(ILAccessorKind.StaticField, Name = "PublicStaticField")]
-    public static extern int PublicStaticField(this TestModel? c);
+    private (int, string) Plus(int i, string s)
+    {
+        return (_i + i, _s + s);
+    }
 
-    [ILAccessor(ILAccessorKind.Field, Name = "PrivateField")]
-    public static extern int PrivateField(this TestModel c);
+    private static int GetStart()
+    {
+        return _start;
+    }
 
-    [ILAccessor(ILAccessorKind.Field, Name = "PublicField")]
-    public static extern int PublicField(this TestModel c);
+    // ReSharper disable once MemberCanBeMadeStatic.Local
+    private string GetString<T>(T item)
+    {
+        return item?.ToString() ?? "";
+    }
 
-    [ILAccessor(ILAccessorKind.StaticField, Name = "PrivateStaticField")]
-    public static extern ref int RefPrivateStaticField(this TestModel? c);
+    private string GetString<T>(T? item) where T : struct
+    {
+        return GetString(item.GetValueOrDefault());
+    }
 
-    [ILAccessor(ILAccessorKind.StaticField, Name = "PublicStaticField")]
-    public static extern ref int RefPublicStaticField(this TestModel? c);
+    private string GetString<T, T2>(T item, T2 item2)
+    {
+        return GetString(item) + GetString(item2);
+    }
 
-    [ILAccessor(ILAccessorKind.Field, Name = "PrivateField")]
-    public static extern ref int RefPrivateField(this TestModel c);
+    private static string StaticGetString<T>(T item)
+    {
+        return item?.ToString() ?? "";
+    }
 
-    [ILAccessor(ILAccessorKind.Field, Name = "PublicField")]
-    public static extern ref int RefPublicField(this TestModel c);
+    private static string StaticGetString<T>(T? item) where T : struct
+    {
+        return StaticGetString(item.GetValueOrDefault());
+    }
 
-    [ILAccessor(ILAccessorKind.Method, Name = ".ctor")]
-    public static extern void CtorAsMethod(this TestModel c, int i, string s, ref double rf);
-}
-
-public static partial class TestModelAccessors
-{
-    [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern TestModel Ctor();
-
-    [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern TestModel Ctor(int i, string s, ref double rf);
+    private static string StaticGetString<T, T2>(T item, T2 item2)
+    {
+        return StaticGetString(item) + StaticGetString(item2);
+    }
 }

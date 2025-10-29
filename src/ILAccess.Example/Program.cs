@@ -147,6 +147,9 @@ public static class ExceptionAccessors
     [ILAccessor(ILAccessorKind.Method, Name = nameof(Exception.GetBaseException))]
     public static extern string GetBaseException(this Exception obj);
 
+    [ILAccessor(ILAccessorKind.StaticMethod, Name = "IsImmutableAgileException")]
+    public static extern void IsImmutableAgileException(Exception? obj, Exception exception);
+
     public static void Test()
     {
         var ex = new Exception("xxxxxx");

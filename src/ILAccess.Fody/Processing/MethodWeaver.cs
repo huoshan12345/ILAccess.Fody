@@ -272,13 +272,15 @@ file static class Extensions
             }
         }
 
-        return methods.Length switch
-        {
-            0 => throw new WeavingException($"Method '{name}' not found on type '{typeDef.FullName}'."),
-            > 1 => throw new WeavingException($"Multiple methods named '{name}' found on type '{typeDef.FullName}'."),
-            _ => methods[0],
-        };
+        if (methods.Length == 1)
+            return methods[0];
 
+        var paraTypeNames = parameterTypes.Select(m => m.Name).JoinWith(", ");
+        throw methods.Length switch
+        {
+            0 => new WeavingException($"Method '{name}({paraTypeNames})' not found on type '{typeDef.FullName}'."),
+            _ => new WeavingException($"{methods.Length} methods '{name}({paraTypeNames})' found on type '{typeDef.FullName}'.")
+        };
 
         MethodDefinition[] GetMethods(TypeDefinition def)
         {

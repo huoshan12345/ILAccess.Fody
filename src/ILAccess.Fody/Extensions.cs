@@ -8,10 +8,18 @@ namespace ILAccess.Fody;
 
 public static class Extensions
 {
+    private const BindingFlags Flags = Public | NonPublic | Instance | Static;
+
     public static PropertyInfo GetRequiredProperty(this Type type, string name)
     {
-        return type.GetProperty(name, Public | NonPublic | Instance | Static)
+        return type.GetProperty(name, Flags)
                ?? throw new InvalidOperationException($"Cannot find property '{name}' in type '{type.FullName}'");
+    }
+
+    public static FieldInfo GetRequiredField(this Type type, string name)
+    {
+        return type.GetField(name, Flags)
+               ?? throw new InvalidOperationException($"Cannot find field '{name}' in type '{type.FullName}'");
     }
 
     public static TypeDefinition GetOrAddIgnoresAccessChecksToAttribute(this ModuleWeavingContext context)

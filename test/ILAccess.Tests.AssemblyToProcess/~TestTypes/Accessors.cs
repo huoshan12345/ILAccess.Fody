@@ -3,20 +3,16 @@ using System.Collections.Generic;
 
 namespace ILAccess.Tests.AssemblyToProcess;
 
-
 public static class ExceptionAccessors
 {
     [ILAccessor(ILAccessorKind.Field, Name = "_message")]
     public static extern ref string Message(this Exception obj);
 
-    [ILAccessor(ILAccessorKind.Field, Name = "_stackTraceString")]
-    public static extern ref string StackTraceString(this Exception obj);
-
     [ILAccessor(ILAccessorKind.Method, Name = "GetClassName")]
     public static extern string GetClassName(this Exception obj);
 
-    [ILAccessor(ILAccessorKind.Method, Name = nameof(Exception.GetBaseException))]
-    public static extern string GetBaseException(this Exception obj);
+    [ILAccessor(ILAccessorKind.StaticMethod, Name = "IsImmutableAgileException")]
+    public static extern bool IsImmutableAgileException(Exception? obj, Exception exception);
 
     [ILAccessor(ILAccessorKind.Constructor)]
     public static extern Exception Ctor();
