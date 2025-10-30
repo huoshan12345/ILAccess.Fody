@@ -125,4 +125,16 @@ internal static class Extensions
             ? byRefType.ElementType
             : typeRef;
     }
+
+    public static Instruction CreateLdarg(this WeaverILProcessor il, int index)
+    {
+        return index switch
+        {
+            0 => il.Create(OpCodes.Ldarg_0),
+            1 => il.Create(OpCodes.Ldarg_1),
+            2 => il.Create(OpCodes.Ldarg_2),
+            3 => il.Create(OpCodes.Ldarg_3),
+            _ => il.IL.Create(OpCodes.Ldarg, index),
+        };
+    }
 }

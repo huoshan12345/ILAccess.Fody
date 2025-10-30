@@ -131,7 +131,7 @@ internal sealed class MethodWeaver
                 var start = isStatic ? 1 : 0;
                 for (var i = start; i < _method.Parameters.Count; i++)
                 {
-                    _il.IL.Append(_il.IL.Create(OpCodes.Ldarg, i));
+                    _il.IL.Append(_il.CreateLdarg(i));
                 }
 
                 var callCode = (isCtor, isStatic, typeRef.IsValueType) switch

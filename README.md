@@ -101,37 +101,37 @@ Below is an example of what the generated IL looks like after weaving:
 ```il
 .method public hidebysig static int32& Value(class ILAccess.Example.TestModel 'instance') cil managed
 {
-  IL_0000: ldarg.0      // 'instance'
-  IL_0001: ldflda       int32 ILAccess.Example.TestModel::_value
-  IL_0006: ret
+    IL_0000: ldarg.0      // 'instance'
+    IL_0001: ldflda       int32 ILAccess.Example.TestModel::_value
+    IL_0006: ret
 }
 
 .method public hidebysig static int32& StaticValue(class ILAccess.Example.TestModel 'instance') cil managed
 {
-  IL_0000: ldsflda      int32 ILAccess.Example.TestModel::_staticValue
-  IL_0005: ret
+    IL_0000: ldsflda      int32 ILAccess.Example.TestModel::_staticValue
+    IL_0005: ret
 }
 
 .method public hidebysig static string GetMessage(class ILAccess.Example.TestModel 'instance', int32 code) cil managed
 {
-  IL_0000: ldarg        'instance'
-  IL_0004: ldarg        code
-  IL_0008: callvirt     instance string ILAccess.Example.TestModel::GetMessage(int32)
-  IL_000d: ret
+    IL_0000: ldarg.0      // 'instance'
+    IL_0001: ldarg.1      // code
+    IL_0002: callvirt     instance string ILAccess.Example.TestModel::GetMessage(int32)
+    IL_0007: ret
 }
 
 .method public hidebysig static string GetStaticMessage(class ILAccess.Example.TestModel 'instance', int32 code) cil managed
 {
-  IL_0000: ldarg        code
-  IL_0004: call         string ILAccess.Example.TestModel::GetStaticMessage(int32)
-  IL_0009: ret
+	IL_0000: ldarg.1      // code
+	IL_0001: call         string ILAccess.Example.TestModel::GetStaticMessage(int32)
+	IL_0006: ret
 }
 
 .method public hidebysig static class ILAccess.Example.TestModel Ctor(int32 x) cil managed
 {
-  IL_0000: ldarg        x
-  IL_0004: newobj       instance void ILAccess.Example.TestModel::.ctor(int32)
-  IL_0009: ret
+	IL_0000: ldarg.0      // x
+	IL_0001: newobj       instance void ILAccess.Example.TestModel::.ctor(int32)
+	IL_0006: ret
 }
 ```
 
