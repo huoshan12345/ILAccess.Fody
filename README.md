@@ -152,6 +152,8 @@ These injected method bodies effectively make private and static members accessi
 ## 🧭 Todo
 
 - [ ] Add more test cases.
+- [ ] Add more compile-time validation and diagnostic messages.
+- [ ] Support AOT (Ahead-of-Time compilation) scenarios, if possible.
 
 ---
 
