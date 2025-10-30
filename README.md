@@ -141,11 +141,12 @@ These injected method bodies effectively make private and static members accessi
 
 ## ⚖️ Comparison
 
-| Feature | Reflection | `UnsafeAccessor` (.NET 8) | ILAccess.Fody |
+| Feature | Reflection | UnsafeAccessor | ILAccess.Fody |
 |---|---:|---:|---:|
-| Performance | Slow ❌ | Fast ✅ | Fast ✅ |
+| Performance | Slow 🐌 | Fast 🚀 | Fast 🚀 |
 | Works before .NET 8 | ✅ | ❌ | ✅ |
-| Compile-time validation | ❌ | ✅ | ✅ |
+| Compile-time validation | ❌ | ❌ | ✅ |
+| AOT | Partly supported ⚠️ | ✅ | ✅ |
 
 ---
 
@@ -153,7 +154,6 @@ These injected method bodies effectively make private and static members accessi
 
 - [ ] Add more test cases.
 - [ ] Add more compile-time validation and diagnostic messages.
-- [ ] Support AOT (Ahead-of-Time compilation) scenarios, if possible.
 
 ---
 
