@@ -104,7 +104,7 @@ internal static class Extensions
             ProcessImportScope(importScope.Parent);
         }
     }
-    
+
     private static readonly PropertyInfo _propertyMetadataImporter = typeof(ModuleDefinition).GetRequiredProperty("MetadataImporter");
 
     public static IMetadataImporter GetMetadataImporter(this ModuleDefinition module)
@@ -117,5 +117,12 @@ internal static class Extensions
     public static IEnumerable<Tuple<TFirst, TSecond>> Zip<TFirst, TSecond>(this IEnumerable<TFirst> first, IEnumerable<TSecond> second)
     {
         return first.Zip(second, Tuple.Create);
+    }
+
+    public static TypeReference UnwrapByRef(this TypeReference typeRef)
+    {
+        return typeRef is ByReferenceType byRefType
+            ? byRefType.ElementType
+            : typeRef;
     }
 }

@@ -23,13 +23,13 @@ namespace ILAccess.Example;
 
 public struct TestStruct
 {
-    private static int _staticValue = 42;
-    private int _value;
-    private TestStruct(int value) => _value = value;
-    private readonly string GetMessage(int code) => $"Current value: {_value}, code: {code}";
-    private static string GetStaticMessage(int code) => $"Current static value: {_staticValue}, code: {code}";
+    internal static int _staticValue = 42;
+    internal int _value;
+    internal TestStruct(int value) => _value = value;
+    internal readonly string GetMessage(int code) => $"Current value: {_value}, code: {code}";
+    internal static string GetStaticMessage(int code) => $"Current static value: {_staticValue}, code: {code}";
     internal readonly string GetString<T>(T item) => item?.ToString() ?? "";
-    private void SetValue(int value) => _value = value;
+    internal void SetValue(int value) => _value = value;
 }
 
 public static class TestStructAccessors
@@ -41,7 +41,7 @@ public static class TestStructAccessors
     public static extern ref int StaticValue(TestStruct instance);
 
     [ILAccessor(ILAccessorKind.Method, Name = "SetValue")]
-    public static extern void SetValue(this TestStruct instance, int value);
+    public static extern void SetValue(this ref TestStruct instance, int value);
 
     [ILAccessor(ILAccessorKind.Method, Name = "GetMessage")]
     public static extern string GetMessage(this TestStruct instance, int code);
@@ -65,10 +65,10 @@ public static class TestStructAccessors
             Console.WriteLine($"_value: {value}");
 
             value += 50;
-            Console.WriteLine($"_value updated: {value}");
+            Console.WriteLine($"_value updated: {model._value}");
 
-            model.SetValue(100);
-            Console.WriteLine($"_value updated by method: {value}");
+            model.SetValue(999);
+            Console.WriteLine($"_value updated by method: {model._value}");
 
             ref var staticValue = ref StaticValue(model);
             Console.WriteLine($"_staticValue: {staticValue}");

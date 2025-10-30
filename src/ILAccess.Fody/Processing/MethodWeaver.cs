@@ -131,17 +131,13 @@ internal sealed class MethodWeaver
                 var start = isStatic ? 1 : 0;
                 for (var i = start; i < _method.Parameters.Count; i++)
                 {
-                    var code = i == 0 && typeRef.IsByReference
-                        ? OpCodes.Ldarga
-                        : OpCodes.Ldarg;
-
-                    _il.IL.Append(_il.IL.Create(code, i));
+                    _il.IL.Append(_il.IL.Create(OpCodes.Ldarg, i));
                 }
 
-                var callCode = (isCtor, isStatic) switch
+                var callCode = (isCtor, isStatic, typeRef.IsValueType) switch
                 {
-                    (true, _) => OpCodes.Newobj,
-                    (_, true) => OpCodes.Call,
+                    (true, _, _) => OpCodes.Newobj,
+                    (_, true, _) or (_, _, true) => OpCodes.Call,
                     _ => OpCodes.Callvirt,
                 };
 
@@ -156,8 +152,15 @@ internal sealed class MethodWeaver
             {
                 var isStatic = kind == ILAccessorKind.StaticField;
                 var field = _context.FindField(type, name, isStatic);
-                var fieldRef = new FieldReference(field.Name, field.FieldType, typeRef);
+                var fieldRef = new FieldReference(field.Name, field.FieldType, typeRef.UnwrapByRef());
                 var isReturnByRef = _method.ReturnType.IsByReference;
+
+                if (isReturnByRef && typeRef is { IsValueType: true, IsByReference: false })
+                {
+                    throw new ArgumentException(
+                        "The first argument must be passed as ref for instance fields and methods on structs.",
+                        _method.Parameters[0].Name);
+                }
 
                 if (field.IsStatic)
                 {
