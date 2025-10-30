@@ -97,7 +97,6 @@ internal sealed class MethodWeaver
 
         var type = typeRef.Resolve();
 
-        var isReturnRef = _method.ReturnType.IsByReference;
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (kind)
         {
@@ -135,10 +134,10 @@ internal sealed class MethodWeaver
                     _il.IL.Append(_il.IL.Create(OpCodes.Ldarg, i));
                 }
 
-                var callCode = (isCtor, isStatic) switch
+                var callCode = (isCtor, isStatic, typeRef.IsValueType) switch
                 {
-                    (true, _) => OpCodes.Newobj,
-                    (_, true) => OpCodes.Call,
+                    (true, _, _) => OpCodes.Newobj,
+                    (_, true, _) or (_, _, true) => OpCodes.Call,
                     _ => OpCodes.Callvirt,
                 };
 
@@ -153,18 +152,28 @@ internal sealed class MethodWeaver
             {
                 var isStatic = kind == ILAccessorKind.StaticField;
                 var field = _context.FindField(type, name, isStatic);
-                var fieldRef = new FieldReference(field.Name, field.FieldType, typeRef);
+                var fieldRef = new FieldReference(field.Name, field.FieldType, typeRef.UnwrapByRef());
+                var isReturnByRef = _method.ReturnType.IsByReference;
+
+                if (isReturnByRef
+                    && field.IsStatic == false
+                    && typeRef is { IsValueType: true, IsByReference: false })
+                {
+                    throw new ArgumentException(
+                        "The first argument must be passed as ref for instance fields and methods on structs.",
+                        _method.Parameters[0].Name);
+                }
 
                 if (field.IsStatic)
                 {
-                    var code = isReturnRef
+                    var code = isReturnByRef
                         ? OpCodes.Ldsflda
                         : OpCodes.Ldsfld;
                     _il.IL.Append(_il.Create(code, fieldRef));
                 }
                 else
                 {
-                    var code = isReturnRef
+                    var code = isReturnByRef
                         ? OpCodes.Ldflda
                         : OpCodes.Ldfld;
                     _il.IL.Append(_il.Create(OpCodes.Ldarg_0));

@@ -49,47 +49,93 @@ public class TestModel
 public static class Accessors
 {
     [ILAccessor(ILAccessorKind.Field, Name = "_value")]
-    public static extern ref int Value(TestModel instance);
+    public static extern ref int Value(this TestModel instance);
 
     [ILAccessor(ILAccessorKind.StaticField, Name = "_staticValue")]
     public static extern ref int StaticValue(TestModel instance);
 
     [ILAccessor(ILAccessorKind.Method, Name = "GetMessage")]
-    public static extern string GetMessage(TestModel instance, int code);
+    public static extern string GetMessage(this TestModel instance, int code);
 
     [ILAccessor(ILAccessorKind.StaticMethod, Name = "GetStaticMessage")]
     public static extern string GetStaticMessage(TestModel? instance, int code);
 
     [ILAccessor(ILAccessorKind.Constructor)]
-    public static extern TestModel NewTestModel(int x);
+    public static extern TestModel Ctor(int x);
 }
 
 internal class Program
 {
     private static void Main(string[] args)
     {
-        var model = Accessors.NewTestModel(100);
-        ref var value = ref Accessors.Value(model);
+        var model = Ctor(100);
+        ref var value = ref model.Value();
         Console.WriteLine($"_value: {value}");
 
         value += 50;
         Console.WriteLine($"_value updated: {value}");
 
-        ref var staticValue = ref Accessors.StaticValue(model);
+        ref var staticValue = ref StaticValue(model);
         Console.WriteLine($"_staticValue: {staticValue}");
         staticValue += 10;
         Console.WriteLine($"_staticValue updated: {staticValue}");
 
-        var message = Accessors.GetMessage(model, 7);
+        var message = model.GetMessage(7);
         Console.WriteLine($"GetMessage: {message}");
 
-        var staticMessage = Accessors.GetStaticMessage(null, 7);
-        Console.WriteLine($"GetStaticMessage: {message}");
+        var staticMessage = GetStaticMessage(null, 7);
+        Console.WriteLine($"GetStaticMessage: {staticMessage}");
 
         Console.Read();
     }
 }
 ```
+
+---
+
+## 🛠️ How It Works
+
+The stub methods in the `TestModel` are replaced at compile-time with injected IL instructions that directly access the target members.  
+Below is an example of what the generated IL looks like after weaving:
+
+```il
+.method public hidebysig static int32& Value(class ILAccess.Example.TestModel 'instance') cil managed
+{
+  IL_0000: ldarg.0      // 'instance'
+  IL_0001: ldflda       int32 ILAccess.Example.TestModel::_value
+  IL_0006: ret
+}
+
+.method public hidebysig static int32& StaticValue(class ILAccess.Example.TestModel 'instance') cil managed
+{
+  IL_0000: ldsflda      int32 ILAccess.Example.TestModel::_staticValue
+  IL_0005: ret
+}
+
+.method public hidebysig static string GetMessage(class ILAccess.Example.TestModel 'instance', int32 code) cil managed
+{
+  IL_0000: ldarg        'instance'
+  IL_0004: ldarg        code
+  IL_0008: callvirt     instance string ILAccess.Example.TestModel::GetMessage(int32)
+  IL_000d: ret
+}
+
+.method public hidebysig static string GetStaticMessage(class ILAccess.Example.TestModel 'instance', int32 code) cil managed
+{
+  IL_0000: ldarg        code
+  IL_0004: call         string ILAccess.Example.TestModel::GetStaticMessage(int32)
+  IL_0009: ret
+}
+
+.method public hidebysig static class ILAccess.Example.TestModel Ctor(int32 x) cil managed
+{
+  IL_0000: ldarg        x
+  IL_0004: newobj       instance void ILAccess.Example.TestModel::.ctor(int32)
+  IL_0009: ret
+}
+```
+
+These injected method bodies effectively make private and static members accessible in a strongly-typed, reflection-free way.
 
 ---
 
@@ -100,6 +146,12 @@ internal class Program
 | Performance | Slow ❌ | Fast ✅ | Fast ✅ |
 | Works before .NET 8 | ✅ | ❌ | ✅ |
 | Compile-time validation | ❌ | ✅ | ✅ |
+
+---
+
+## 🧭 Todo
+
+- [ ] Add more test cases.
 
 ---
 
