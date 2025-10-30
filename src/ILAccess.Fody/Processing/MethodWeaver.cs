@@ -97,7 +97,6 @@ internal sealed class MethodWeaver
 
         var type = typeRef.Resolve();
 
-        var isReturnRef = _method.ReturnType.IsByReference;
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (kind)
         {
@@ -132,7 +131,11 @@ internal sealed class MethodWeaver
                 var start = isStatic ? 1 : 0;
                 for (var i = start; i < _method.Parameters.Count; i++)
                 {
-                    _il.IL.Append(_il.IL.Create(OpCodes.Ldarg, i));
+                    var code = i == 0 && typeRef.IsByReference
+                        ? OpCodes.Ldarga
+                        : OpCodes.Ldarg;
+
+                    _il.IL.Append(_il.IL.Create(code, i));
                 }
 
                 var callCode = (isCtor, isStatic) switch
@@ -154,17 +157,18 @@ internal sealed class MethodWeaver
                 var isStatic = kind == ILAccessorKind.StaticField;
                 var field = _context.FindField(type, name, isStatic);
                 var fieldRef = new FieldReference(field.Name, field.FieldType, typeRef);
+                var isReturnByRef = _method.ReturnType.IsByReference;
 
                 if (field.IsStatic)
                 {
-                    var code = isReturnRef
+                    var code = isReturnByRef
                         ? OpCodes.Ldsflda
                         : OpCodes.Ldsfld;
                     _il.IL.Append(_il.Create(code, fieldRef));
                 }
                 else
                 {
-                    var code = isReturnRef
+                    var code = isReturnByRef
                         ? OpCodes.Ldflda
                         : OpCodes.Ldfld;
                     _il.IL.Append(_il.Create(OpCodes.Ldarg_0));

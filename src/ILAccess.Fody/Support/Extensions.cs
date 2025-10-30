@@ -6,7 +6,7 @@ using TypeAttributes = Mono.Cecil.TypeAttributes;
 
 namespace ILAccess.Fody.Support;
 
-public static class Extensions
+internal static class Extensions
 {
     private const BindingFlags Flags = Public | NonPublic | Instance | Static;
 
@@ -104,8 +104,7 @@ public static class Extensions
             ProcessImportScope(importScope.Parent);
         }
     }
-
-
+    
     private static readonly PropertyInfo _propertyMetadataImporter = typeof(ModuleDefinition).GetRequiredProperty("MetadataImporter");
 
     public static IMetadataImporter GetMetadataImporter(this ModuleDefinition module)
