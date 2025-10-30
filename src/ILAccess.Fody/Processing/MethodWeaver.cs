@@ -155,7 +155,9 @@ internal sealed class MethodWeaver
                 var fieldRef = new FieldReference(field.Name, field.FieldType, typeRef.UnwrapByRef());
                 var isReturnByRef = _method.ReturnType.IsByReference;
 
-                if (isReturnByRef && typeRef is { IsValueType: true, IsByReference: false })
+                if (isReturnByRef
+                    && field.IsStatic == false
+                    && typeRef is { IsValueType: true, IsByReference: false })
                 {
                     throw new ArgumentException(
                         "The first argument must be passed as ref for instance fields and methods on structs.",
