@@ -214,7 +214,7 @@ file static class Extensions
         var packsIndex = Array.IndexOf(sections, "packs");
         if (packsIndex < 0
             || sections.Length <= packsIndex + 3
-            || sections[packsIndex + 1].EndsWith(refSuffix) == false)
+            || sections[packsIndex + 1].EndsWith(refSuffix, StringComparison.Ordinal) == false)
             return false;
 
         var newSections = new List<string>(sections.Take(packsIndex))
