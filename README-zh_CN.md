@@ -2,7 +2,8 @@
 [![构建状态](https://github.com/huoshan12345/ILAccess.Fody/workflows/Build/badge.svg)](https://github.com/huoshan12345/ILAccess.Fody/actions?query=workflow%3ABuild)
 [![NuGet 包](https://img.shields.io/nuget/v/ILAccess.Fody.svg?logo=NuGet)](https://www.nuget.org/packages/ILAccess.Fody)
 [![.NET](https://img.shields.io/badge/.net%20standard-2.0-ff69b4.svg?)](https://www.microsoft.com/net/download)
-[![许可证](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/huoshan12345/ILAccess.Fody/blob/main/LICENSE)  
+[![许可证](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/huoshan12345/ILAccess.Fody/blob/main/LICENSE)
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/huoshan12345/ILAccess.Fody/blob/main/README.md)
 
 ## ✨ 概述
 

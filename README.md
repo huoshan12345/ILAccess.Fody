@@ -2,7 +2,8 @@
 [![Build](https://github.com/huoshan12345/ILAccess.Fody/workflows/Build/badge.svg)](https://github.com/huoshan12345/ILAccess.Fody/actions?query=workflow%3ABuild)
 [![NuGet package](https://img.shields.io/nuget/v/ILAccess.Fody.svg?logo=NuGet)](https://www.nuget.org/packages/ILAccess.Fody)
 [![.net](https://img.shields.io/badge/.net%20standard-2.0-ff69b4.svg?)](https://www.microsoft.com/net/download)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/huoshan12345/ILAccess.Fody/blob/main/LICENSE)  
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/huoshan12345/ILAccess.Fody/blob/main/LICENSE)
+[![中文](https://img.shields.io/badge/lang-中文-yellow.svg)](https://github.com/huoshan12345/ILAccess.Fody/blob/main/README-zh_CN.md)
 
 ## ✨ Overview
 
