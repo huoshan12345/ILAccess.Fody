@@ -15,7 +15,7 @@ env:
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -26,6 +26,7 @@ jobs:
           dotnet-version: |
             8.0.x
             9.0.x
+            10.0.x
 
       - name: Restore
         run: dotnet restore ${{ env.SOLUTION }} -v q
@@ -40,7 +41,40 @@ jobs:
         uses: dorny/test-reporter@main
         if: (success() || failure())
         with:
-          name: Test Report
+          name: Test Report For Linux
+          path: TestResults/**/*.trx
+          reporter: dotnet-trx
+          list-suites: failed
+          list-tests: failed
+
+  build-win:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION }} -v q
+
+      - name: Test Debug
+        run: dotnet test ${{ env.SOLUTION }} --no-restore -c Debug
+
+      - name: Test Release
+        run: dotnet test ${{ env.SOLUTION }} --no-restore -c Release
+
+      - name: Test Report
+        uses: dorny/test-reporter@main
+        if: (success() || failure())
+        with:
+          name: Test Report For Windows
           path: TestResults/**/*.trx
           reporter: dotnet-trx
           list-suites: failed
