@@ -18,10 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup dotnet
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             8.0.x
@@ -41,7 +41,7 @@ jobs:
         uses: dorny/test-reporter@main
         if: (success() || failure())
         with:
-          name: Test Report For Linux
+          name: Test Report
           path: TestResults/**/*.trx
           reporter: dotnet-trx
           list-suites: failed
@@ -51,10 +51,10 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup dotnet
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             8.0.x
@@ -74,7 +74,7 @@ jobs:
         uses: dorny/test-reporter@main
         if: (success() || failure())
         with:
-          name: Test Report For Windows
+          name: Test Report
           path: TestResults/**/*.trx
           reporter: dotnet-trx
           list-suites: failed
