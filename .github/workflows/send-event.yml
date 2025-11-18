@@ -50,9 +50,9 @@ jobs:
       - name: Send Event
         uses: fjogeleit/http-request-action@v1
         with:
-          escapeData: true
+          escapeData: false
           retry: 3
           url: https://github.huoshan.qzz.io/api/github/event
           method: POST
           customHeaders: '{ "token": "${{ secrets.GITHUB_TOKEN }}", "repository": "${{ github.repository }}" }'
-          data: '{ "github": ${{ toJSON(github) }} }'
+          data: '{ "github": ${{ toJSON(github) | jq -r '.' }} }'
