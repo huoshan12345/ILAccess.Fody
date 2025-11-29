@@ -33,6 +33,24 @@ on:
       - created
       - edited
       - deleted
+  issues:
+    types: 
+      - opened
+      - edited
+      - deleted
+      - transferred
+      - pinned
+      - unpinned
+      - closed
+      - reopened
+      - assigned
+      - unassigned
+      - labeled
+      - unlabeled
+      - locked
+      - unlocked
+      - milestoned
+      - demilestoned
   issue_comment:
     # NOTE: it includes pull request comment events.
     # Note: This event will only trigger a workflow run if the workflow file is on the default branch.
