@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
-    <TargetFrameworks Condition="'$(IsWindows)' == 'true'">net472;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="$(IsWindows)">net472;net8.0;net9.0;net10.0</TargetFrameworks>
     <TargetFrameworks Condition="'$(IsWindows)' != 'true'">net8.0;net9.0;net10.0</TargetFrameworks>
     <DisableFody>true</DisableFody>
   </PropertyGroup>
@@ -15,7 +15,7 @@
 
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
     <!--to fix the error: "Could not load file or assembly 'System.Reflection.Metadata" when running tests on net472 using GitHub action-->
-    <PackageReference Include="System.Reflection.Metadata" Version="10.0.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="10.0.1" />
   </ItemGroup>
 
   <ItemGroup>

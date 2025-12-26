@@ -1,5 +1,4 @@
-﻿using ILAccess.Fody.Support;
-using MoreFodyHelpers.Support;
+﻿using MoreFodyHelpers.Support;
 
 namespace ILAccess.Fody.Processing;
 
@@ -26,6 +25,8 @@ public class ModuleWeaver : BaseModuleWeaver
                     if (MethodWeaver.TryProcess(context, method, _log, out var assemblyName))
                     {
                         emittedAssemblyNames.Add(assemblyName);
+                        _log.Info($"Emitted assembly: {assemblyName}");
+
                     }
                 }
                 catch (WeavingException ex)

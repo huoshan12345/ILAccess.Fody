@@ -1,9 +1,3 @@
-using System.IO;
-using System.Reflection;
-using static System.Reflection.BindingFlags;
-using MethodAttributes = Mono.Cecil.MethodAttributes;
-using TypeAttributes = Mono.Cecil.TypeAttributes;
-
 namespace ILAccess.Fody.Support;
 
 internal static class Extensions

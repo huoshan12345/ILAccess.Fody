@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net9.0;</TargetFrameworks>
     <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
-	<PublishAot>true</PublishAot>
+    <PublishAot>true</PublishAot>
     <!--<DisableFody>true</DisableFody>-->
   </PropertyGroup>
 
