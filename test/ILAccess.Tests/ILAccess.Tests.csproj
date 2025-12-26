@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
-    <TargetFrameworks Condition="$(IsWindows)">net472;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="'$(IsWindows)' == 'true'">net472;net8.0;net9.0;net10.0</TargetFrameworks>
     <TargetFrameworks Condition="'$(IsWindows)' != 'true'">net8.0;net9.0;net10.0</TargetFrameworks>
     <DisableFody>true</DisableFody>
   </PropertyGroup>
