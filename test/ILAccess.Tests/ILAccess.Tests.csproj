@@ -15,7 +15,7 @@
 
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
     <!--to fix the error: "Could not load file or assembly 'System.Reflection.Metadata" when running tests on net472 using GitHub action-->
-    <PackageReference Include="System.Reflection.Metadata" Version="10.0.1" />
+    <PackageReference Include="System.Reflection.Metadata" Version="10.0.2" />
   </ItemGroup>
 
   <ItemGroup>
