@@ -1,4 +1,4 @@
-name: send-event
+name: Send Event
 on:
   push:
     branches:
@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send Event
-        uses: fjogeleit/http-request-action@v1
+        uses: fjogeleit/http-request-action@v2
         with:
           escapeData: false
           retry: 3
