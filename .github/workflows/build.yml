@@ -3,6 +3,12 @@ on:
   push:
     branches:
       - main
+    paths:
+      - src/**
+      - test/**
+      - '*.slnx'
+      - '*.sln'
+      - NuGet.Config
   pull_request:
     branches:
       - main

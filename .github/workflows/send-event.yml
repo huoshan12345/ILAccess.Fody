@@ -75,3 +75,4 @@ jobs:
           method: POST
           customHeaders: '{ "token": "${{ secrets.GITHUB_TOKEN }}", "repository": "${{ github.repository }}" }'
           data: '{ "github": ${{ toJSON(github) }} }'
+          timeout: 30000
