@@ -11,7 +11,7 @@ on:
       - NuGet.Config
       - build/**
       - .github/workflows/build.yml
-  pull_request:
+  pull_request_target: # use pull_request_target instead of pull_request to let dependabot have permission to access action secrets.
     branches:
       - main
 
