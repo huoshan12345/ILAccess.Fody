@@ -4,13 +4,14 @@ on:
     branches:
       - main
     paths:
+      - .github/workflows/build.yml
+      - '*.sln'
+      - '*.slnx'
+      - build/pack.ps1
+      - build/pkg.version
+      - NuGet.Config
       - src/**
       - test/**
-      - '*.slnx'
-      - '*.sln'
-      - NuGet.Config
-      - build/**
-      - .github/workflows/build.yml
   pull_request_target: # use pull_request_target instead of pull_request to let dependabot have permission to access action secrets.
     branches:
       - main
