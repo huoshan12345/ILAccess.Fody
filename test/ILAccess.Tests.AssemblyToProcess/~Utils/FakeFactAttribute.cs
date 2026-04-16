@@ -12,5 +12,8 @@ namespace ILAccess.Tests.AssemblyToProcess;
 [AttributeUsage(AttributeTargets.Method)]
 public class FakeFactAttribute : FactAttribute
 {
-    public override string Skip { get; set; } = "This is a fake fact attribute for source generator.";
+    public FakeFactAttribute()
+    {
+        Skip = "This is a fake fact attribute for source generator.";
+    }
 }

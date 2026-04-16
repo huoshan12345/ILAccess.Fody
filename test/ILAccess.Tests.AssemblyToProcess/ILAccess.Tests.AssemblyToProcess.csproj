@@ -5,14 +5,12 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>false</IsTestProject>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectCapability Remove="TestContainer" />
   </ItemGroup>
-
   <ItemGroup>
+    <PackageReference Include="xunit.v3.assert" />
+    <PackageReference Include="xunit.v3.extensibility.core" />
     <ProjectReference Include="..\..\src\ILAccess\ILAccess.csproj" />
-    <PackageReference Include="xunit" Version="2.9.3" />
   </ItemGroup>
-
 </Project>

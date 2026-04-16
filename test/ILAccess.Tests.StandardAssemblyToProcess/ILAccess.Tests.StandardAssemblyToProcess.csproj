@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <DisableFody>true</DisableFody>
@@ -8,18 +7,15 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>false</IsTestProject>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectCapability Remove="TestContainer" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Include="$(_RefProjectDir)**\*.cs" Exclude="$(_RefProjectDir)obj\**;$(_RefProjectDir)AssemblyToProcessReference.cs;" Link="$(_RefProject)\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.v3.assert" />
+    <PackageReference Include="xunit.v3.extensibility.core" />
     <ProjectReference Include="..\..\src\ILAccess\ILAccess.csproj" />
   </ItemGroup>
-
 </Project>

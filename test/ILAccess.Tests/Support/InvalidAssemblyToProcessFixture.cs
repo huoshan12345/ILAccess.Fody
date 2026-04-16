@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Reflection;
-using ILAccess.Fody.Processing;
 using ILAccess.Tests.InvalidAssemblyToProcess;
 
 namespace ILAccess.Tests.Support;

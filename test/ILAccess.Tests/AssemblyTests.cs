@@ -1,7 +1,5 @@
 ﻿using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
-using ILAccess.Fody.Processing;
-using MoreFodyHelpers;
 
 namespace ILAccess.Tests;
 

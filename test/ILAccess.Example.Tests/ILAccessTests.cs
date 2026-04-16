@@ -5,7 +5,6 @@ using Fody;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace ILAccess.Example.Tests;
 

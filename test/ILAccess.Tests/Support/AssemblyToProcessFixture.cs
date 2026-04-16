@@ -1,9 +1,4 @@
-﻿using ILAccess.Fody.Processing;
-using MoreFodyHelpers;
-
-#pragma warning disable 618
-
-namespace ILAccess.Tests.Support;
+﻿namespace ILAccess.Tests.Support;
 
 public static class AssemblyToProcessFixture
 {

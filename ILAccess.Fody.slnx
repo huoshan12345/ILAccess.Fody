@@ -5,7 +5,7 @@
     <File Path=".github/workflows/send-event.yml" />
   </Folder>
   <Folder Name="/build/">
-    <File Path="build/bump_version.ps1" />
+    <File Path="build/bump-version.ps1" />
     <File Path="build/pack.ps1" />
     <File Path="build/pkg.version" />
   </Folder>
@@ -20,6 +20,7 @@
   </Folder>
   <Folder Name="/src/">
     <File Path="src/Directory.Build.props" />
+    <File Path="src/Directory.Packages.props" />
     <File Path="src/MoreFodyHelpers.props" />
     <Project Path="src/ILAccess.Fody/ILAccess.Fody.csproj" />
     <Project Path="src/ILAccess/ILAccess.csproj">
@@ -28,6 +29,7 @@
   </Folder>
   <Folder Name="/test/">
     <File Path="test/Directory.Build.props" />
+    <File Path="test/Directory.Packages.props" />
     <File Path="test/EmitGeneratedFiles.props" />
     <Project Path="test/ILAccess.Tests.AssemblyToProcess/ILAccess.Tests.AssemblyToProcess.csproj" />
     <Project Path="test/ILAccess.Tests.InvalidAssemblyToProcess/ILAccess.Tests.InvalidAssemblyToProcess.csproj" />
