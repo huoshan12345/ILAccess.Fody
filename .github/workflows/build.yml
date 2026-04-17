@@ -5,8 +5,8 @@ on:
       - main
     paths:
       - .github/workflows/build.yml
-      - '*.sln'
-      - '*.slnx'
+      - "*.sln"
+      - "*.slnx"
       - build/pack.ps1
       - build/pkg.version
       - NuGet.Config
@@ -55,20 +55,47 @@ jobs:
           reporter: dotnet-trx
           list-suites: failed
           list-tests: failed
+
   build-win:
     runs-on: windows-2022
     steps:
-
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Setup dotnet
-        uses: actions/setup-dotnet@v4
+      # Check if required SDKs are installed, if not, install them.
+      # useful for win to save time, since installing SDKs on windows can be slow.
+      - name: Check missing SDKs
+        id: sdk_check
+        shell: pwsh
+        run: |
+          $wanted = @(
+            '8.0.x'
+            '9.0.x'
+            '10.0.x'
+          )
+
+          $installed = dotnet --list-sdks
+
+          $missing = foreach ($sdk in $wanted) {
+            $prefix = $sdk -replace 'x$', ''
+            if (-not ($installed -match "^$([regex]::Escape($prefix))")) {
+              $sdk
+            }
+          }
+
+          $joined = $missing -join "`n"
+
+          "missing<<EOF" >> $env:GITHUB_OUTPUT
+          $joined >> $env:GITHUB_OUTPUT
+          "EOF" >> $env:GITHUB_OUTPUT
+
+          Write-Host "Missing SDKs: $joined"
+
+      - name: Setup missing SDKs
+        if: steps.sdk_check.outputs.missing != ''
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: |
-            8.0.x
-            9.0.x
-            10.0.x
+          dotnet-version: ${{ steps.sdk_check.outputs.missing }}
 
       - name: Restore
         run: dotnet restore ${{ env.SOLUTION }} -v q
@@ -89,8 +116,25 @@ jobs:
           list-suites: failed
           list-tests: failed
 
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest    
+    needs: 
+      - build
+      - build-win
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
       - name: NuGet Publish
-        if: ${{ github.ref == 'refs/heads/main' }}
         shell: pwsh
         run: |
           ./build/pack.ps1
@@ -103,16 +147,15 @@ jobs:
           echo $ver
 
       - name: Create Tag
-        if: github.ref == 'refs/heads/main'
-        uses: joutvhu/create-tag@v1
+        uses: huoshan12345/update-tag@v1
         with:
           tag_name: ${{ env.VERSION }}
           on_tag_exists: skip
+          update_if_exists: true
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
 
       - name: Create Release
-        if: github.ref == 'refs/heads/main'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.VERSION }}
