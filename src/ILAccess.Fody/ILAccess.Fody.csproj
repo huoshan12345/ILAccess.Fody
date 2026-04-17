@@ -8,9 +8,6 @@
   <ItemGroup>
     <PackageReference Include="Nullable" PrivateAssets="all" />
     <PackageReference Include="MoreFodyHelpers" GeneratePathProperty="true" />
-    <None Include="$(PkgMoreFodyHelpers)\lib\$(TargetFramework)\MoreFodyHelpers.dll" Visible="false">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\ILAccess\ILAccessorKind.cs">
