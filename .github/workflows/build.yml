@@ -55,15 +55,13 @@ jobs:
           reporter: dotnet-trx
           list-suites: failed
           list-tests: failed
-
   build-win:
     runs-on: windows-2022
     steps:
+
       - name: Checkout
         uses: actions/checkout@v6
 
-      # Check if required SDKs are installed, if not, install them.
-      # useful for win to save time, since installing SDKs on windows can be slow.
       - name: Check missing SDKs
         id: sdk_check
         shell: pwsh
@@ -115,14 +113,14 @@ jobs:
           reporter: dotnet-trx
           list-suites: failed
           list-tests: failed
-
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest    
-    needs: 
+    runs-on: ubuntu-latest
+    needs:
       - build
       - build-win
     steps:
+
       - name: Checkout
         uses: actions/checkout@v6
 
