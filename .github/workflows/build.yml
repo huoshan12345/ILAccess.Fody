@@ -55,10 +55,10 @@ jobs:
           reporter: dotnet-trx
           list-suites: failed
           list-tests: failed
+
   build-win:
     runs-on: windows-2022
     steps:
-
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -113,6 +113,7 @@ jobs:
           reporter: dotnet-trx
           list-suites: failed
           list-tests: failed
+
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -120,7 +121,6 @@ jobs:
       - build
       - build-win
     steps:
-
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -149,7 +149,7 @@ jobs:
         with:
           tag_name: ${{ env.VERSION }}
           on_tag_exists: skip
-          update_if_exists: true
+          update_if_exists: false
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
 
