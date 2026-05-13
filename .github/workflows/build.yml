@@ -5,8 +5,8 @@ on:
       - main
     paths:
       - .github/workflows/build.yml
-      - "*.sln"
-      - "*.slnx"
+      - '*.sln'
+      - '*.slnx'
       - build/pack.ps1
       - build/pkg.version
       - NuGet.Config
@@ -148,7 +148,6 @@ jobs:
         uses: huoshan12345/update-tag@v1
         with:
           tag_name: ${{ env.VERSION }}
-          on_tag_exists: skip
           update_if_exists: false
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
