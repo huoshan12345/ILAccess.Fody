@@ -3,28 +3,62 @@ on:
   push:
     branches:
       - main
-    paths:
-      - .github/workflows/build.yml
-      - '*.sln'
-      - '*.slnx'
-      - build/pack.ps1
-      - build/pkg.version
-      - NuGet.Config
-      - src/**
-      - test/**
-  pull_request_target: # use pull_request_target instead of pull_request to let dependabot have permission to access action secrets.
+  pull_request:
     branches:
       - main
 
+permissions:
+  pull-requests: write
+  contents: write
+  statuses: write
+  checks: write
+  actions: write
+
 env:
-  DOTNET_NOLOGO: 1
-  VERSION: 0.0.1
-  NUGET_APIKEY: ${{ secrets.NUGET_APIKEY }}
   SOLUTION: ILAccess.Fody.slnx
+  DOTNET_NOLOGO: 1
+  NUGET_SOURCE: https://api.nuget.org/v3/index.json
+  MYGET_SOURCE: https://www.myget.org/F/huoshan12345/api/v2/package
+  USE_NUGET: true
+  USE_MYGET: false
+  ARTIFACTS_NAME: nuget-packages
+  ARTIFACTS_DIR: ./artifacts/nuget/
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      should-build: ${{ steps.filter.outputs.build }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check changed files
+        id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            build:
+              - '*.sln'
+              - '*.slnx'
+              - .github/workflows/build.yml
+              - build/pack.ps1
+              - build/pkg.version
+              - NuGet.Config
+              - src/**
+              - test/**
+
   build:
     runs-on: ubuntu-latest
+    if: needs.changes.outputs.should-build == 'true'
+
+    needs:
+      - changes
+
+    outputs:
+      version: ${{ steps.set_version.outputs.version }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -40,11 +74,18 @@ jobs:
       - name: Restore
         run: dotnet restore ${{ env.SOLUTION }} -v q
 
+      - name: Build
+        run: |
+          dotnet build ${{ env.SOLUTION }} -c Debug --no-restore
+          dotnet build ${{ env.SOLUTION }} -c Release --no-restore
+
       - name: Test Debug
-        run: dotnet test ${{ env.SOLUTION }} --no-restore -c Debug
+        timeout-minutes: 5
+        run: dotnet test /nr:false ${{ env.SOLUTION }} -c Debug --no-restore --no-build
 
       - name: Test Release
-        run: dotnet test ${{ env.SOLUTION }} --no-restore -c Release
+        timeout-minutes: 5
+        run: dotnet test /nr:false ${{ env.SOLUTION }} -c Release --no-restore --no-build
 
       - name: Test Report
         uses: dorny/test-reporter@main
@@ -56,8 +97,40 @@ jobs:
           list-suites: failed
           list-tests: failed
 
+      - name: Set version
+        id: set_version
+        shell: pwsh
+        run: |
+          $ver = Get-Content -Path ./build/pkg.version
+          echo "version=$ver" >> $Env:GITHUB_OUTPUT
+          echo $ver
+
+      - name: Pack
+        shell: pwsh
+        run: |
+          dotnet pack ${{ env.SOLUTION }} -v q -c Release --no-restore --no-build `
+          --include-symbols -p:SymbolPackageFormat=snupkg -p:PackageVersion=${{ steps.set_version.outputs.version }} `
+          -o ${{ env.ARTIFACTS_DIR }}
+
+      - name: Upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.ARTIFACTS_NAME }}
+          path: ${{ env.ARTIFACTS_DIR }}
+
   build-win:
-    runs-on: windows-2022
+    runs-on: windows-latest
+    if: needs.changes.outputs.should-build == 'true'
+
+    needs:
+      - changes
+
+    env:
+      TMP: D:\tmp
+      TEMP: D:\tmp
+      DOTNET_INSTALL_DIR: D:\tools\dotnet
+      NUGET_PACKAGES: D:\.nuget\packages
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -98,11 +171,18 @@ jobs:
       - name: Restore
         run: dotnet restore ${{ env.SOLUTION }} -v q
 
+      - name: Build
+        run: |
+          dotnet build ${{ env.SOLUTION }} -c Debug --no-restore
+          dotnet build ${{ env.SOLUTION }} -c Release --no-restore
+
       - name: Test Debug
-        run: dotnet test ${{ env.SOLUTION }} --no-restore -c Debug
+        timeout-minutes: 5
+        run: dotnet test /nr:false ${{ env.SOLUTION }} -c Debug --no-restore --no-build
 
       - name: Test Release
-        run: dotnet test ${{ env.SOLUTION }} --no-restore -c Release
+        timeout-minutes: 5
+        run: dotnet test /nr:false ${{ env.SOLUTION }} -c Release --no-restore --no-build
 
       - name: Test Report
         uses: dorny/test-reporter@main
@@ -114,6 +194,63 @@ jobs:
           list-suites: failed
           list-tests: failed
 
+  build-result:
+    if: always()
+    runs-on: ubuntu-latest
+
+    needs:
+      - changes
+      - build
+      - build-win
+
+    steps:
+      - name: Check result
+        shell: pwsh
+        run: |
+          $shouldBuild = "${{ needs.changes.outputs.should-build }}" -eq "true"
+
+          $jobs = @(
+            @{
+              Name = "build"
+              Result = "${{ needs.build.result }}"
+              AllowSkipped = -not $shouldBuild
+            },
+            @{
+              Name = "build-win"
+              Result = "${{ needs.build-win.result }}"
+              AllowSkipped = -not $shouldBuild
+            },
+            @{
+              Name = "changes"
+              Result = "${{ needs.changes.result }}"
+              AllowSkipped = $false
+            }
+          )
+
+          $invalidJobs = @()
+
+          foreach ($job in $jobs) {
+            Write-Host "$($job.Name): $($job.Result)"
+
+            $isValid =
+              $job.Result -eq "success" -or
+              ($job.Result -eq "skipped" -and $job.AllowSkipped)
+
+            if (-not $isValid) {
+              $invalidJobs += $job
+            }
+          }
+
+          if ($invalidJobs.Count -gt 0) {
+            Write-Host "Invalid job results:"
+
+            foreach ($job in $invalidJobs) {
+              Write-Host "- $($job.Name): $($job.Result)"
+            }
+
+            exit 1
+          }
+
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -123,27 +260,41 @@ jobs:
       - build-win
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup dotnet
-        uses: actions/setup-dotnet@v5
+      - name: Download packages
+        uses: actions/download-artifact@v8
         with:
-          dotnet-version: |
-            8.0.x
-            9.0.x
-            10.0.x
+          name: ${{ env.ARTIFACTS_NAME }}
+          path: ${{ env.ARTIFACTS_DIR }}
+
+      - name: List packages
+        shell: bash
+        run: |
+          echo "Downloaded files:"
+          ls -lhR ${{ env.ARTIFACTS_DIR }}
 
       - name: NuGet Publish
+        if: env.USE_NUGET == 'true'
         shell: pwsh
         run: |
-          ./build/pack.ps1
+          dotnet nuget push "${{ env.ARTIFACTS_DIR }}*.nupkg" `
+            --api-key "${{ secrets.NUGET_APIKEY }}" `
+            --source "${{ env.NUGET_SOURCE }}" `
+            --skip-duplicate
 
-      - name: Set variables
+      - name: MyGet Publish
+        if: env.USE_MYGET == 'true'
         shell: pwsh
         run: |
-          $ver = Get-Content -Path ./build/pkg.version
-          echo "VERSION=$ver" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+          dotnet nuget push "${{ env.ARTIFACTS_DIR }}*.nupkg" `
+            --api-key "${{ secrets.MYGET_APIKEY }}" `
+            --source "${{ env.MYGET_SOURCE }}" `
+            --skip-duplicate
+
+      - name: Set version
+        shell: pwsh
+        run: |
+          $ver = "${{ needs.build.outputs.version }}"
+          echo "VERSION=$ver" >> $Env:GITHUB_ENV
           echo $ver
 
       - name: Create Tag
