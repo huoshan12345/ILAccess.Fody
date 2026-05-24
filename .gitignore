@@ -246,5 +246,5 @@ BenchmarkDotNet.Artifacts/
 # rider
 .idea/
 
-
 ~Generated/
+!Directory.Build.rsp
