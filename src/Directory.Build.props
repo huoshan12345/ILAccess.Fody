@@ -17,12 +17,13 @@
     <PackageTags>IL;MSIL;Fody;ILWeaving;Cecil</PackageTags>
     <PackageProjectUrl>https://github.com/huoshan12345/ILAccess.Fody</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIconUrl>https://raw.githubusercontent.com/huoshan12345/ILAccess.Fody/main/icon.png</PackageIconUrl>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="..\..\icon.png" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
 </Project>

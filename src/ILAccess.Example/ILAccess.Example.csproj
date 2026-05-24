@@ -4,6 +4,7 @@
     <TargetFrameworks>net9.0;</TargetFrameworks>
     <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
     <PublishAot>true</PublishAot>
+    <IsPackable>false</IsPackable>
     <!--<DisableFody>true</DisableFody>-->
   </PropertyGroup>
   <ItemGroup>
