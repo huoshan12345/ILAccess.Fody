@@ -81,11 +81,11 @@ jobs:
 
       - name: Test Debug
         timeout-minutes: 5
-        run: dotnet test /nr:false ${{ env.SOLUTION }} -c Debug --no-restore --no-build
+        run: dotnet test --solution ${{ env.SOLUTION }} -c Debug --no-restore --no-build
 
       - name: Test Release
         timeout-minutes: 5
-        run: dotnet test /nr:false ${{ env.SOLUTION }} -c Release --no-restore --no-build
+        run: dotnet test --solution ${{ env.SOLUTION }} -c Release --no-restore --no-build
 
       - name: Test Report
         uses: dorny/test-reporter@main
@@ -178,11 +178,11 @@ jobs:
 
       - name: Test Debug
         timeout-minutes: 5
-        run: dotnet test /nr:false ${{ env.SOLUTION }} -c Debug --no-restore --no-build
+        run: dotnet test --solution ${{ env.SOLUTION }} -c Debug --no-restore --no-build
 
       - name: Test Release
         timeout-minutes: 5
-        run: dotnet test /nr:false ${{ env.SOLUTION }} -c Release --no-restore --no-build
+        run: dotnet test --solution ${{ env.SOLUTION }} -c Release --no-restore --no-build
 
       - name: Test Report
         uses: dorny/test-reporter@main
