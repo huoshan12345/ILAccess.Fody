@@ -13,7 +13,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <PropertyGroup>
+  <PropertyGroup Condition="$(MSBuildProjectName) == 'ILAccess.Tests'">
     <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --report-trx</TestingPlatformCommandLineArguments>
   </PropertyGroup>
 </Project>
