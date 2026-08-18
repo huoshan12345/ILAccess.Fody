@@ -8,17 +8,12 @@
     <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
-
-  <PropertyGroup>
-    <_RootDir>$(MSBuildThisFileDirectory)../</_RootDir>
-    <VSTestLogger>trx%3bLogFileName=$(MSBuildProjectName).trx</VSTestLogger>
-    <VSTestResultsDirectory>$(_RootDir)TestResults/$(Configuration)/$(TargetFramework)</VSTestResultsDirectory>
-  </PropertyGroup>
-
   <ItemGroup>
     <Content Include="TestData\**\*.*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
+  <PropertyGroup Condition="$(MSBuildProjectName) == 'ILAccess.Tests'">
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --report-trx</TestingPlatformCommandLineArguments>
+  </PropertyGroup>
 </Project>

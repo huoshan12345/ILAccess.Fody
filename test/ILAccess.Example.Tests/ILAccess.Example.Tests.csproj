@@ -4,6 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <DisableFody>true</DisableFody>
+    <OutputType>Exe</OutputType>
     <NoWarn>$(NoWarn);NU1903;MSB3277</NoWarn>
   </PropertyGroup>
   <ItemGroup>
