@@ -30,6 +30,7 @@
   </Folder>
   <Folder Name="/test/">
     <File Path="test/Directory.Build.props" />
+    <File Path="test/Directory.Build.targets" />
     <File Path="test/Directory.Packages.props" />
     <File Path="test/EmitGeneratedFiles.props" />
     <Project Path="test/ILAccess.Tests.AssemblyToProcess/ILAccess.Tests.AssemblyToProcess.csproj" />

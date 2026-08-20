@@ -1,19 +1,27 @@
 <Project>
   <PropertyGroup>
+    <DisableFody>true</DisableFody>
+    <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <LangVersion>latest</LangVersion>
     <NoWarn>xUnit2013;CS9113</NoWarn>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <IsWindows>$([MSBuild]::IsOSPlatform('Windows'))</IsWindows>
+    <Is64BitOS>$([System.Environment]::Is64BitOperatingSystem)</Is64BitOS>
+    <TargetFrameworkVersion>$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)', 2))</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <Prefer32Bit>false</Prefer32Bit>
+    <RuntimeIdentifier Condition="$(Is64BitOS)">win-x64</RuntimeIdentifier>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="appsettings*.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="TestData\**\*.*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <PropertyGroup Condition="$(MSBuildProjectName) == 'ILAccess.Tests'">
-    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --report-trx</TestingPlatformCommandLineArguments>
-  </PropertyGroup>
 </Project>

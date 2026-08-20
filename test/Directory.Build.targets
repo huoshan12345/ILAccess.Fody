@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <IsTestProject Condition="'$(IsTestProject)' == ''">true</IsTestProject>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(IsTestProject)">
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --report-trx</TestingPlatformCommandLineArguments>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="Xunit.v3.ParallelizationAttribute" Condition="$(IsTestProject)">
+      <_Parameter1>Mode = Xunit.Sdk.ParallelMode.None</_Parameter1>
+      <_Parameter1_IsLiteral>true</_Parameter1_IsLiteral>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>
