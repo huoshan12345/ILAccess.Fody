@@ -135,38 +135,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Check missing SDKs
-        id: sdk_check
-        shell: pwsh
-        run: |
-          $wanted = @(
-            '8.0.x'
-            '9.0.x'
-            '10.0.x'
-          )
-
-          $installed = dotnet --list-sdks
-
-          $missing = foreach ($sdk in $wanted) {
-            $prefix = $sdk -replace 'x$', ''
-            if (-not ($installed -match "^$([regex]::Escape($prefix))")) {
-              $sdk
-            }
-          }
-
-          $joined = $missing -join "`n"
-
-          "missing<<EOF" >> $env:GITHUB_OUTPUT
-          $joined >> $env:GITHUB_OUTPUT
-          "EOF" >> $env:GITHUB_OUTPUT
-
-          Write-Host "Missing SDKs: $joined"
-
-      - name: Setup missing SDKs
-        if: steps.sdk_check.outputs.missing != ''
+      - name: Setup dotnet
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: ${{ steps.sdk_check.outputs.missing }}
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
 
       - name: Restore
         run: dotnet restore ${{ env.SOLUTION }} -v q
