@@ -1,15 +1,29 @@
+param ([bool]$norestore)
+
 $ErrorActionPreference = "Stop"
 
-$root = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$isGithub = [string]::IsNullOrEmpty($Env:GITHUB_ACTION) -eq $false
+Write-Output "IsGithub = $isGithub, NoRestore = $norestore"
 
-$pkgPath = ([io.path]::combine($root, "*.nupkg"))
+$buildDir = [io.path]::combine($MyInvocation.MyCommand.Definition, "..")
+$rootDir = [io.path]::combine($buildDir, "..")
+$sln = [io.path]::combine($rootDir, "ILAccess.Fody.slnx")
+
+$pkgPath = [io.path]::combine($buildDir, "*.nupkg")
+$snupkgPath = [io.path]::combine($buildDir, "*.snupkg")
 Remove-Item $pkgPath
+Remove-Item $snupkgPath
 
-$ver_path = Join-Path $root "pkg.version"
-$ver = Get-Content -Path $ver_path
+$verPath = ([io.path]::combine($buildDir, "pkg.version"))
+$ver = Get-Content -Path $verPath
 $key = $Env:NUGET_APIKEY
-$nuget = "https://api.nuget.org/v3/index.json"
-$isGithubAction = [string]::IsNullOrEmpty($Env:GITHUB_ACTION) -eq $false
+$source = "https://api.nuget.org/v3/index.json"
+
+$useMyget = $false
+if ($useMyget) {
+  $key = $Env:MYGET_APIKEY
+  $source = "https://www.myget.org/F/huoshan12345/api/v2/package"
+}
 
 if ([string]::IsNullOrEmpty($key)) {
   throw "the api key is empty"
@@ -17,25 +31,35 @@ if ([string]::IsNullOrEmpty($key)) {
 if ([string]::IsNullOrEmpty($ver)) {
   throw "the version is empty"
 }
-$srcPath = [io.path]::combine($root, "..", "src")
-$path = [io.path]::combine($srcPath, "ILAccess")
 
-Write-Output "Packing $($path.Basename)"
-& dotnet clean $path --nologo -v q
-& dotnet pack $path --nologo -v q -c Release --include-symbols --output $root -p:PackageVersion=$ver
-if ($Lastexitcode -ne 0)	{
+$command = @'
+dotnet pack $sln `
+--nologo -v q -c Release `
+--include-symbols -p:SymbolPackageFormat=snupkg `
+--output $buildDir -p:PackageVersion=$ver
+'@
+
+if ($norestore -eq $true) {
+  $command = $command + " --no-restore"
+}
+
+Invoke-Expression $command
+
+if ($Lastexitcode -ne 0) {
   throw "failed with exit code $LastExitCode"
 }
+
 Write-Output "Packing finished."
 
-
-$files = Get-ChildItem $pkgPath
-
-if ($isGithubAction) {
+if ($isGithub) {
   Write-Output "Uploading..."
+
+  $files = Get-ChildItem $pkgPath
   foreach ($file in $files) {
     Write-Output "Uploading $($file.Basename)"
-    & dotnet nuget push $file -k $key --source $nuget -t 50 --skip-duplicate
+
+    # Push the .nupkg to NuGet.org (we will detect the .snupkg and push it for you)
+    & dotnet nuget push $file -k $key --source $source -t 50 --skip-duplicate
     if ($Lastexitcode -ne 0) {
       throw "failed with exit code $LastExitCode"
     }
@@ -44,9 +68,11 @@ if ($isGithubAction) {
   Write-Output "Uploading finished."
 }
 else {
-  $packageName = Split-Path $path -Leaf
-  $packageLocalDir = [io.path]::combine( $env:USERPROFILE, ".nuget", "packages", $packageName.ToLower(), $ver);
-  Remove-Item $packageLocalDir -Recurse -Force -ErrorAction SilentlyContinue
+  $files = Get-ChildItem $pkgPath
+  foreach ($file in $files) {
+    $name = $file.Basename.Substring(0, $file.Basename.Length - $ver.Length - 1)
+    Write-Output "Removing $($name) from nuget cache"
+    $packageLocalDir = [io.path]::combine( $env:USERPROFILE, ".nuget", "packages", $name.ToLower(), $ver);
+    Remove-Item $packageLocalDir -Recurse -Force -ErrorAction SilentlyContinue
+  }
 }
-
-
