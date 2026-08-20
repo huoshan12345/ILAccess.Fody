@@ -6,7 +6,6 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
-    <PackageVersion Include="PolySharp" Version="1.16.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.3.3" />
     <PackageVersion Include="System.Reflection.Metadata" Version="10.0.11" />
     <PackageVersion Include="System.Runtime.Loader" Version="4.3.0" />

@@ -25,7 +25,4 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <ItemGroup Condition="$([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 8.0))">
-    <PackageReference Include="PolySharp" PrivateAssets="all" />
-  </ItemGroup>
 </Project>
