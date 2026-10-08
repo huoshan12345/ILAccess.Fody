@@ -13,6 +13,7 @@ permissions:
   statuses: write
   checks: write
   actions: write
+  id-token: write
 
 env:
   SOLUTION: ILAccess.Fody.slnx
@@ -251,12 +252,19 @@ jobs:
           echo "Downloaded files:"
           ls -lhR ${{ env.ARTIFACTS_DIR }}
 
+      - name: NuGet Login
+        if: env.USE_NUGET == 'true'
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: huoshan12345
+
       - name: NuGet Publish
         if: env.USE_NUGET == 'true'
         shell: pwsh
         run: |
           dotnet nuget push "${{ env.ARTIFACTS_DIR }}*.nupkg" `
-            --api-key "${{ secrets.NUGET_APIKEY }}" `
+            --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" `
             --source "${{ env.NUGET_SOURCE }}" `
             --skip-duplicate
 
