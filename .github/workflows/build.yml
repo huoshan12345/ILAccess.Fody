@@ -235,6 +235,9 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
+    env:
+      NUGET_APIKEY: ${{ secrets.NUGET_APIKEY }}
+
     needs:
       - build
       - build-win
@@ -253,7 +256,7 @@ jobs:
           ls -lhR ${{ env.ARTIFACTS_DIR }}
 
       - name: NuGet Login
-        if: env.USE_NUGET == 'true'
+        if: env.USE_NUGET == 'true' && env.NUGET_APIKEY == ''
         uses: NuGet/login@v1
         id: login
         with:
@@ -264,7 +267,7 @@ jobs:
         shell: pwsh
         run: |
           dotnet nuget push "${{ env.ARTIFACTS_DIR }}*.nupkg" `
-            --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" `
+            --api-key "${{ env.NUGET_APIKEY != '' && env.NUGET_APIKEY || steps.login.outputs.NUGET_API_KEY }}" `
             --source "${{ env.NUGET_SOURCE }}" `
             --skip-duplicate
 
