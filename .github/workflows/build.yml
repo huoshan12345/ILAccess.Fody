@@ -80,8 +80,8 @@ jobs:
 
       - name: Build
         run: |
-          dotnet build ${{ env.SOLUTION }} -c Debug --no-restore
-          dotnet build ${{ env.SOLUTION }} -c Release --no-restore
+          dotnet build ${{ env.SOLUTION }} -c Debug --no-restore -nr:false
+          dotnet build ${{ env.SOLUTION }} -c Release --no-restore -nr:false
 
       - name: Test Debug
         timeout-minutes: 5
