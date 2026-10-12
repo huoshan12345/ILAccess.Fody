@@ -12,6 +12,7 @@
   </Folder>
   <Folder Name="/config/">
     <File Path=".editorconfig" />
+    <File Path="Directory.Packages.props" />
     <File Path="NuGet.Config" />
     <File Path="README.md" />
   </Folder>
@@ -21,7 +22,6 @@
   </Folder>
   <Folder Name="/src/">
     <File Path="src/Directory.Build.props" />
-    <File Path="src/Directory.Packages.props" />
     <File Path="src/MoreFodyHelpers.props" />
     <Project Path="src/ILAccess.Fody/ILAccess.Fody.csproj" />
     <Project Path="src/ILAccess/ILAccess.csproj">
@@ -31,7 +31,6 @@
   <Folder Name="/test/">
     <File Path="test/Directory.Build.props" />
     <File Path="test/Directory.Build.targets" />
-    <File Path="test/Directory.Packages.props" />
     <File Path="test/EmitGeneratedFiles.props" />
     <Project Path="test/ILAccess.Tests.AssemblyToProcess/ILAccess.Tests.AssemblyToProcess.csproj" />
     <Project Path="test/ILAccess.Tests.InvalidAssemblyToProcess/ILAccess.Tests.InvalidAssemblyToProcess.csproj" />
