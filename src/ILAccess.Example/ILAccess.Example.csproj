@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net10.0;</TargetFrameworks>
+    <TargetFrameworks>net11.0;</TargetFrameworks>
     <DisableFastUpToDateCheck>True</DisableFastUpToDateCheck>
     <PublishAot>true</PublishAot>
     <IsPackable>false</IsPackable>
@@ -9,6 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Fody" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.DotNet.ILCompiler" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ILAccess\ILAccess.csproj" />

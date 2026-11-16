@@ -74,6 +74,7 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
+            11.0.x
 
       - name: Restore
         run: dotnet restore ${{ env.SOLUTION }} -v q
@@ -85,11 +86,11 @@ jobs:
 
       - name: Test Debug
         timeout-minutes: 5
-        run: dotnet test --solution ${{ env.SOLUTION }} -c Debug --no-restore --no-build
+        run: dotnet test --solution ${{ env.SOLUTION }} -c Debug --no-restore --no-build --no-artifact-post-processing
 
       - name: Test Release
         timeout-minutes: 5
-        run: dotnet test --solution ${{ env.SOLUTION }} -c Release --no-restore --no-build
+        run: dotnet test --solution ${{ env.SOLUTION }} -c Release --no-restore --no-build --no-artifact-post-processing
 
       - name: Test Report
         uses: dorny/test-reporter@main
@@ -147,6 +148,7 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
+            11.0.x
 
       - name: Restore
         run: dotnet restore ${{ env.SOLUTION }} -v q
@@ -158,11 +160,11 @@ jobs:
 
       - name: Test Debug
         timeout-minutes: 5
-        run: dotnet test --solution ${{ env.SOLUTION }} -c Debug --no-restore --no-build
+        run: dotnet test --solution ${{ env.SOLUTION }} -c Debug --no-restore --no-build --no-artifact-post-processing
 
       - name: Test Release
         timeout-minutes: 5
-        run: dotnet test --solution ${{ env.SOLUTION }} -c Release --no-restore --no-build
+        run: dotnet test --solution ${{ env.SOLUTION }} -c Release --no-restore --no-build --no-artifact-post-processing
 
       - name: Test Report
         uses: dorny/test-reporter@main

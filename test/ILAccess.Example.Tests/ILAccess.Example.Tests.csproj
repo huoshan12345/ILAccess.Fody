@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net10.0</TargetFrameworks>
+    <TargetFrameworks>net11.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <!-- only run test cases in this project using Resharper test runner and exclude it from other test runners like dotnet test -->
     <IsTestProject>false</IsTestProject>
